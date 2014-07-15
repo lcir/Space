@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html ng-app>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="packages/shadow_dom/shadow_dom.min.js"></script>
+    <script type="application/dart" src="space.dart"></script>
+    <script type="text/javascript" src="packages/browser/dart.js"></script>
+</head>
+<body>
+<h3>Hello {{name}}!</h3>
+Name: <input type="text" ng-model="name" />
+<div id="container">
+    <canvas id="area" width="500px" height="400px"></canvas>
+</div>
+</body>
+</html>
