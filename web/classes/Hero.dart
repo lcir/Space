@@ -1,5 +1,11 @@
 part of SpaceEngine;
 
+var random = new Random();
+var width = 400;
+var height = 400;
+var speed = .05;
+
+@Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
 class Hero {
 
   int _positionX = 0;
@@ -33,4 +39,8 @@ class Hero {
   void heroIsAmazingFireBall(){
 
   }
+
+
+  var x = width * random.nextDouble();
+  var y = height * random.nextDouble();
 }

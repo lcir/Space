@@ -1,8 +1,15 @@
 library SpaceEngine;
 
+import 'package:angular/angular.dart';
+import 'dart:html';
+import 'dart:math';
+import 'dart:core';
+
+
 part "Alien.dart";
 part "Hero.dart";
 part "SpaceArmy.dart";
+part "MovingObject.dart";
 
 class GameEngine {
 
@@ -11,4 +18,7 @@ class GameEngine {
 
   static final int FIRE = 32;
 
+  void requestAnimationFrame(fn) {
+    window.requestAnimationFrame((_) => fn());
+  }
 }
