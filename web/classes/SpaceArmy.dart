@@ -1,4 +1,6 @@
+part of SpaceEngine;
+
 class SpaceArmy {
-  SpaceArmy() {
+
 
 }

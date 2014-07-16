@@ -1,12 +1,27 @@
 import 'package:angular/angular.dart';
 import 'package:angular/application_factory.dart';
 import 'dart:html';
+import 'components/PlayingCanvas.dart';
+import 'classes/GameEngine.dart';
 
-void main(){
-  applicationFactory().run();
+class MyAppModule extends Module {
+  MyAppModule() {
+    type(PlayingCanvas);
+  }
+}
 
-  CanvasElement canvas =  querySelector("#area");
+void main() {
+  applicationFactory().addModule(new MyAppModule()).run();
+  window.onKeyPress.listen(keyPressed);
+}
 
-  int width = canvas.width;
-  int height = canvas.height;
+void keyPressed(KeyboardEvent event) {
+  window.console.log(event.keyCode);
+  if (event.keyCode == GameEngine.LEFT) {
+    print("left");
+  } else if (event.keyCode == GameEngine.RIGHT) {
+    print("right");
+  } else if (event.keyCode == GameEngine.FIRE) {
+    print("FIRE!");
+  }
 }
