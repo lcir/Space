@@ -1,15 +1,17 @@
 part of SpaceEngine;
 
-@Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
-class Hero {
+Random ran = new Random();
 
-  var positionX = (window.innerWidth - 100) / 2;
-  var positionY = (window.innerHeight - 120) - 10;
+@Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
+class Hero extends AnimatedObjects {
 
 
   Hero(){
+    this.positionX = ((window.innerWidth - 100) / 2) + ran.nextInt(500);
+    this.positionY = (window.innerHeight - 120) - 10;
     window.onKeyPress.listen(_keyPressed);
-    //GameEngine.requestAnimationFrame(test);
+
+    GameEngine.listOfAnimatedObject.add(this);
   }
 
   void _keyPressed(KeyboardEvent event) {
@@ -26,7 +28,6 @@ class Hero {
   }
 
   void _oneGrateMoveOfHero(direction) {
-    //step until screenL < position < screenR
     if (direction == GameEngine.LEFT) {
       if(positionX > 0) {
         positionX -= GameEngine.MOVE_STEP;
@@ -53,4 +54,13 @@ class Hero {
   void heroIsAmazingFireBall(){
 
   }
+
+  void letsAnimate() {
+    this.positionY -= ran.nextInt(5);
+    if(positionY <= 0){
+      this.positionY = (window.innerHeight - 120) - 10;
+    }
+  }
+
+
 }

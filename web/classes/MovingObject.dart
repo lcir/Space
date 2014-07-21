@@ -9,10 +9,10 @@ class MovingObject {
 
   MovingObject(this.element, this.scope);
 
-  set position(Hero model) {
+  set position(AnimatedObjects model) {
     scope
       ..watch('positionX', (positionX, _) => element.style.left = '${positionX + GameEngine.MOVE_STEP}px', context: model, canChangeModel: true)
-      ..watch('positionY', (positionY, _) => element.style.top = '${positionY + GameEngine.MOVE_STEP}px', context: model, canChangeModel: false);
+      ..watch('positionY', (positionY, _) => element.style.top = '${positionY + GameEngine.MOVE_STEP}px', context: model, canChangeModel: true);
   }
 }
 

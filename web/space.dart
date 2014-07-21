@@ -12,6 +12,8 @@ class MyAppModule extends Module {
     type(Hero);
     type(MovingObject);
   }
+
+
 }
 
 void main() {
