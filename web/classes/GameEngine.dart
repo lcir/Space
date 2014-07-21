@@ -18,7 +18,10 @@ class GameEngine {
 
   static final int FIRE = 32;
 
-  void requestAnimationFrame(fn) {
+  static final int MOVE_STEP = 10;
+
+
+  static void requestAnimationFrame(fn) {
     window.requestAnimationFrame((_) => fn());
   }
 }

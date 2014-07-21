@@ -1,26 +1,40 @@
 part of SpaceEngine;
 
-var random = new Random();
-var width = 400;
-var height = 400;
-var speed = .05;
-
 @Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
 class Hero {
 
-  int _positionX = 0;
-  int _positionY = 0;
+  var positionX = (window.innerWidth - 100) / 2;
+  var positionY = (window.innerHeight - 120) - 10;
 
-  final int _moveStep = 10;
 
-  void oneGrateMoveOfHero(direction) {
+  Hero(){
+    window.onKeyPress.listen(_keyPressed);
+    //GameEngine.requestAnimationFrame(test);
+  }
+
+  void _keyPressed(KeyboardEvent event) {
+    window.console.log(event.keyCode);
+    if (event.keyCode == GameEngine.LEFT) {
+      print("left");
+      _oneGrateMoveOfHero(event.keyCode);
+    } else if (event.keyCode == GameEngine.RIGHT) {
+      print("right");
+      _oneGrateMoveOfHero(event.keyCode);
+    } else if (event.keyCode == GameEngine.FIRE) {
+      print("FIRE!");
+    }
+  }
+
+  void _oneGrateMoveOfHero(direction) {
     //step until screenL < position < screenR
     if (direction == GameEngine.LEFT) {
-      _positionY -= _moveStep;
-      heroRefresh();
+      if(positionX > 0) {
+        positionX -= GameEngine.MOVE_STEP;
+      }
     } else if (direction == GameEngine.RIGHT) {
-      _positionY += _moveStep;
-      heroRefresh();
+      if(positionX < (window.innerWidth - 120)){
+        positionX += GameEngine.MOVE_STEP;
+      }
     }
   }
 
@@ -39,8 +53,4 @@ class Hero {
   void heroIsAmazingFireBall(){
 
   }
-
-
-  var x = width * random.nextDouble();
-  var y = height * random.nextDouble();
 }
