@@ -5,13 +5,10 @@ Random ran = new Random();
 @Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
 class Hero extends AnimatedObjects {
 
-
   Hero(){
     this.positionX = ((window.innerWidth - 100) / 2) + ran.nextInt(500);
     this.positionY = (window.innerHeight - 120) - 10;
     window.onKeyPress.listen(_keyPressed);
-
-    GameEngine.listOfAnimatedObject.add(this);
   }
 
   void _keyPressed(KeyboardEvent event) {

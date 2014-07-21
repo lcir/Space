@@ -8,6 +8,7 @@ abstract class AnimatedObjects {
   void letsAnimate();
 
   AnimatedObjects() {
+    GameEngine.listOfAnimatedObject.add(this);
     GameEngine.animationStart();
   }
 }
