@@ -10,6 +10,7 @@ class MyAppModule extends Module {
   MyAppModule() {
     type(PlayingCanvas);
     type(Hero);
+    type(HeroShoot);
     type(MovingObject);
   }
 

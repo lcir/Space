@@ -2,12 +2,22 @@ part of SpaceEngine;
 
 abstract class AnimatedObjects {
 
-  var positionX = (window.innerWidth - 100) / 2;
-  var positionY = (window.innerHeight - 120) - 10;
+  var positionX = 0;
+  var positionY = 0;
+
+  bool animate = true;
 
   void letsAnimate();
 
-  AnimatedObjects() {
+  AnimatedObjects(){
+    GameEngine.listOfAnimatedObject.add(this);
+    GameEngine.animationStart();
+  }
+
+  AnimatedObjects.positions(var positionX, var positionY){
+    this.positionX = positionX;
+    this.positionY = positionY;
+
     GameEngine.listOfAnimatedObject.add(this);
     GameEngine.animationStart();
   }

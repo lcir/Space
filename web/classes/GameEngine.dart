@@ -11,6 +11,7 @@ part "Hero.dart";
 part "SpaceArmy.dart";
 part "MovingObject.dart";
 part "AnimatedObjects.dart";
+part "HeroShoot.dart";
 
 class GameEngine {
 
@@ -25,19 +26,23 @@ class GameEngine {
 
   static var isStarted = false;
 
-  static void animationStart(){
+  static void animationStart() {
 
-    if(!isStarted){
+    if (!isStarted) {
       isStarted = true;
       _animationCore();
     }
 
   }
 
-  static void _animationCore(){
+  static void _animationCore() {
 
-    for(AnimatedObjects animatedObjects in listOfAnimatedObject){
-      animatedObjects.letsAnimate();
+    listOfAnimatedObject.removeWhere((c) => !c.animate);
+
+    for (AnimatedObjects animatedObjects in listOfAnimatedObject) {
+      if (animatedObjects.animate) {
+        animatedObjects.letsAnimate();
+      }
     }
 
     GameEngine.requestAnimationFrame(_animationCore);

@@ -5,8 +5,10 @@ Random ran = new Random();
 @Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
 class Hero extends AnimatedObjects {
 
+  List<HeroShoot> shoots = new List<HeroShoot>();
+
   Hero(){
-    this.positionX = ((window.innerWidth - 100) / 2) + ran.nextInt(500);
+    this.positionX = ((window.innerWidth - 100) / 2);
     this.positionY = (window.innerHeight - 120) - 10;
     window.onKeyPress.listen(_keyPressed);
   }
@@ -20,6 +22,10 @@ class Hero extends AnimatedObjects {
       print("right");
       _oneGrateMoveOfHero(event.keyCode);
     } else if (event.keyCode == GameEngine.FIRE) {
+
+      HeroShoot shoot = new HeroShoot.positions(this.positionX + 50,this.positionY);
+      shoots.add(shoot);
+
       print("FIRE!");
     }
   }
@@ -53,10 +59,7 @@ class Hero extends AnimatedObjects {
   }
 
   void letsAnimate() {
-    this.positionY -= ran.nextInt(5);
-    if(positionY <= 0){
-      this.positionY = (window.innerHeight - 120) - 10;
-    }
+    shoots.removeWhere((c) => !c.animate);
   }
 
 
