@@ -3,64 +3,55 @@ part of SpaceEngine;
 Random ran = new Random();
 
 @Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
-class Hero extends AnimatedObjects {
+class Hero extends GameEntity{
 
-  List<HeroShoot> shoots = new List<HeroShoot>();
-
-  Hero(){
-    this.positionX = ((window.innerWidth - 100) / 2);
-    this.positionY = (window.innerHeight - 120) - 10;
+  Hero() {
+    this.positionX = window.innerWidth * 0.5 - 50;
     window.onKeyPress.listen(_keyPressed);
   }
 
   void _keyPressed(KeyboardEvent event) {
-    window.console.log(event.keyCode);
     if (event.keyCode == GameEngine.LEFT) {
-      print("left");
       _oneGrateMoveOfHero(event.keyCode);
     } else if (event.keyCode == GameEngine.RIGHT) {
-      print("right");
       _oneGrateMoveOfHero(event.keyCode);
     } else if (event.keyCode == GameEngine.FIRE) {
-
-      HeroShoot shoot = new HeroShoot(this.positionX + 50,this.positionY);
-      shoots.add(shoot);
-
-      print("FIRE!");
+      this.fireHeroBigLaserThing();
     }
   }
 
   void _oneGrateMoveOfHero(direction) {
     if (direction == GameEngine.LEFT) {
-      if(positionX > 0) {
+      if (positionX > 0) {
         positionX -= GameEngine.MOVE_STEP;
       }
     } else if (direction == GameEngine.RIGHT) {
-      if(positionX < (window.innerWidth - 120)){
+      if (positionX < (window.innerWidth - 120)) {
         positionX += GameEngine.MOVE_STEP;
       }
     }
   }
 
   void heroRefresh() {
-    //Repinting hero point
+    //The same with X axis.
+    this.positionY = (window.innerHeight * 0.95) - 110;
   }
 
-  void fireHeroBigLaserThing(){
+  void fireHeroBigLaserThing() {
+    HeroShoot shoot = new HeroShoot(this.positionX + 50, this.positionY);
+    shoots.add(shoot);
+  }
+
+  void fireHeroIntelligentMissiles() {
 
   }
 
-  void fireHeroIntelligentMissiles(){
-
-  }
-
-  void heroIsAmazingFireBall(){
+  void heroIsAmazingFireBall() {
 
   }
 
   void letsAnimate() {
-    shoots.removeWhere((c) => !c.animate);
+    this.heroRefresh();
+    this.removeOldMissiles();
   }
-
-
 }

@@ -1,5 +1,7 @@
 body {
-    background-color: darkslategray;
+    background-image: url("../img/space.jpg");
+    background-size: 1600px 800px;
+
 }
 
 div {

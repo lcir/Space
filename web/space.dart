@@ -8,8 +8,10 @@ import 'classes/GameEngine.dart';
 class MyAppModule extends Module {
   MyAppModule() {
     type(Hero);
-    type(HeroShoot);
     type(MovingObject);
+    type(Alien);
+    type(SpaceArmy);
+    type(ResizeBodyDecorator);
   }
 
 

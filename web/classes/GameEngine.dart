@@ -7,11 +7,14 @@ import 'dart:core';
 
 
 part "Alien.dart";
+part "GameEntity.dart";
 part "Hero.dart";
 part "SpaceArmy.dart";
 part "MovingObject.dart";
 part "AnimatedObjects.dart";
 part "HeroShoot.dart";
+part "AlienShoot.dart";
+part "ResizeBodyDecorator.dart";
 
 class GameEngine {
 
@@ -22,7 +25,11 @@ class GameEngine {
 
   static final int MOVE_STEP = 10;
 
+  static int screenWidth;
+  static int screenHeight;
+
   static List<AnimatedObjects> listOfAnimatedObject = new List<AnimatedObjects>();
+  static List<AnimatedObjects> listOfNewAnimatedObject = new List<AnimatedObjects>();
 
   static var isStarted = false;
 
@@ -38,6 +45,9 @@ class GameEngine {
   static void _animationCore() {
 
     listOfAnimatedObject.removeWhere((c) => !c.animate);
+
+    listOfAnimatedObject.addAll(listOfNewAnimatedObject);
+    listOfNewAnimatedObject.clear();
 
     for (AnimatedObjects animatedObjects in listOfAnimatedObject) {
       if (animatedObjects.animate) {

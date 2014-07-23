@@ -1,11 +1,11 @@
-#heros {
+#alien {
     background-color: orangered;
     position: absolute;
     border: 1px solid aquamarine;
     width: 100px;
     height: 100px;}
 
-#shoot {
+#alien_shoot {
     background-color: orangered;
     position: absolute;
     border: 2px solid orangered;

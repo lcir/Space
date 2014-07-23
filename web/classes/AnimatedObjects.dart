@@ -10,7 +10,7 @@ abstract class AnimatedObjects {
   void letsAnimate();
 
   AnimatedObjects(){
-    GameEngine.listOfAnimatedObject.add(this);
+    GameEngine.listOfNewAnimatedObject.add(this);
     GameEngine.animationStart();
   }
 
@@ -18,7 +18,7 @@ abstract class AnimatedObjects {
     this.positionX = positionX;
     this.positionY = positionY;
 
-    GameEngine.listOfAnimatedObject.add(this);
+    GameEngine.listOfNewAnimatedObject.add(this);
     GameEngine.animationStart();
   }
 }
