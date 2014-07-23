@@ -1,6 +1,7 @@
 name: Space
 dependencies:
   angular: any
+  shadow_dom: any
   browser: any
 transformers:
   - angular

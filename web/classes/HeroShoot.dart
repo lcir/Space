@@ -2,9 +2,7 @@ part of SpaceEngine;
 
 class HeroShoot extends AnimatedObjects {
 
-  HeroShoot();
-
-  HeroShoot.positions(var positionX, var positionY):super.positions(positionX, positionY);
+  HeroShoot(var positionX, var positionY):super.positions(positionX, positionY);
 
    void letsAnimate() {
     this.positionY -= 2;

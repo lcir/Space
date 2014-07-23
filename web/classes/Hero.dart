@@ -23,7 +23,7 @@ class Hero extends AnimatedObjects {
       _oneGrateMoveOfHero(event.keyCode);
     } else if (event.keyCode == GameEngine.FIRE) {
 
-      HeroShoot shoot = new HeroShoot.positions(this.positionX + 50,this.positionY);
+      HeroShoot shoot = new HeroShoot(this.positionX + 50,this.positionY);
       shoots.add(shoot);
 
       print("FIRE!");

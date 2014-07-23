@@ -3,12 +3,10 @@ import 'package:angular/application_factory.dart';
 import 'dart:html';
 import 'dart:math';
 
-import 'components/PlayingCanvas.dart';
 import 'classes/GameEngine.dart';
 
 class MyAppModule extends Module {
   MyAppModule() {
-    type(PlayingCanvas);
     type(Hero);
     type(HeroShoot);
     type(MovingObject);
