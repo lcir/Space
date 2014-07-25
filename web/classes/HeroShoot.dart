@@ -6,6 +6,7 @@ class HeroShoot extends AnimatedObjects {
 
    void letsAnimate() {
     this.positionY -= 2;
+    GameEngine.testForAliensImpact(this);
     if(positionY <= 0){
       animate = false;
     }

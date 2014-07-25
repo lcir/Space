@@ -8,6 +8,7 @@ class Hero extends GameEntity{
   Hero() {
     this.positionX = window.innerWidth * 0.5 - 50;
     window.onKeyPress.listen(_keyPressed);
+    GameEngine.absoluteHero = this;
   }
 
   void _keyPressed(KeyboardEvent event) {
@@ -54,4 +55,10 @@ class Hero extends GameEntity{
     this.heroRefresh();
     this.removeOldMissiles();
   }
+
+  void stylizeObjects(Element element) {
+   element.style.backgroundColor = "blue";
+  }
+
+
 }

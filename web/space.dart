@@ -12,6 +12,7 @@ class MyAppModule extends Module {
     type(Alien);
     type(SpaceArmy);
     type(ResizeBodyDecorator);
+    type(StylizeGameEntities);
   }
 
 

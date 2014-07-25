@@ -6,6 +6,7 @@ class AlienShoot extends AnimatedObjects {
 
    void letsAnimate() {
     this.positionY += 1;
+    GameEngine.testForHeroImpact(this);
     if(positionY >= GameEngine.screenHeight - 50){
       animate = false;
     }

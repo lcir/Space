@@ -15,6 +15,7 @@ part "AnimatedObjects.dart";
 part "HeroShoot.dart";
 part "AlienShoot.dart";
 part "ResizeBodyDecorator.dart";
+part "StylizeGameEntities.dart";
 
 class GameEngine {
 
@@ -33,6 +34,47 @@ class GameEngine {
 
   static var isStarted = false;
 
+  static SpaceArmy amazingSpaceArmy;
+  static Hero absoluteHero;
+
+  static void testForHeroImpact(AlienShoot shoot) {
+    if (absoluteHero != null) {
+      if (absoluteHero.animate) {
+        if (((absoluteHero.positionX) <= shoot.positionX) && ((absoluteHero.positionX + absoluteHero.bodyWidth) >= shoot.positionX) && (absoluteHero.getHigherEdge() <= shoot.positionY )) {
+          absoluteHero.entitySmashed();
+
+          print(absoluteHero);
+          print(absoluteHero.positionX);
+          print(absoluteHero.positionY);
+
+          print(shoot);
+          print(shoot.positionX);
+          print(shoot.positionY);
+        }
+      }
+    }
+  }
+
+  static void testForAliensImpact(HeroShoot shoot) {
+    if (amazingSpaceArmy != null) {
+      for (Alien alien in amazingSpaceArmy.aliens) {
+        if (alien.animate) {
+          if (((alien.positionX) <= shoot.positionX) && ((alien.positionX + alien.bodyWidth) >= shoot.positionX) && (alien.getLowerEdge() >= shoot.positionY )) {
+            alien.entitySmashed();
+
+            print(alien);
+            print(alien.positionX);
+            print(alien.positionY);
+
+            print(shoot);
+            print(shoot.positionX);
+            print(shoot.positionY);
+          }
+        }
+      }
+    }
+  }
+
   static void animationStart() {
 
     if (!isStarted) {
@@ -42,7 +84,9 @@ class GameEngine {
 
   }
 
-  static void _animationCore() {
+  static
+
+  void _animationCore() {
 
     listOfAnimatedObject.removeWhere((c) => !c.animate);
 
@@ -58,7 +102,9 @@ class GameEngine {
     GameEngine.requestAnimationFrame(_animationCore);
   }
 
-  static void requestAnimationFrame(fn) {
+  static
+
+  void requestAnimationFrame(fn) {
     window.requestAnimationFrame((_) => fn());
   }
 }

@@ -6,7 +6,7 @@ Random random = new Random();
 class Alien extends GameEntity {
 
   Alien(){
-    this.positionX = random.nextInt(1400);
+    this.positionX = random.nextInt(700);
     this.positionY = (window.innerHeight * 0.1) + 110;
   }
 
@@ -21,6 +21,13 @@ class Alien extends GameEntity {
   void letsAnimate() {
     this.alienRefresh();
     this.removeOldMissiles();
+    if(this.getLowerEdge() >= GameEngine.screenHeight){
+      this.animate = false;
+    }
+  }
+
+  void stylizeObjects(Element element) {
+
   }
 
 
