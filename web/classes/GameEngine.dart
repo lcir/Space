@@ -59,12 +59,14 @@ class GameEngine {
     if (amazingSpaceArmy != null) {
       for (Alien alien in amazingSpaceArmy.aliens) {
         if (alien.animate) {
-          if (((alien.positionX) <= shoot.positionX) && ((alien.positionX + alien.bodyWidth) >= shoot.positionX) && (alien.getLowerEdge() >= shoot.positionY )) {
+          if (alien.getLowerEdge() >= shoot.positionY ) {
             alien.entitySmashed();
+            shoot.impact();
 
             print(alien);
             print(alien.positionX);
             print(alien.positionY);
+            print(alien.getLowerEdge());
 
             print(shoot);
             print(shoot.positionX);
