@@ -7,20 +7,19 @@ class Alien extends GameEntity {
 
   Alien(){
     this.positionX = random.nextInt(700);
-    this.positionY = (window.innerHeight * 0.1) + 110;
+    this.positionY = (window.innerHeight * 0.1) + 90;
   }
 
   void alienRefresh() {
     this.positionY += 0.1;
     if(random.nextInt(200) >= 199){
-      AlienShoot shoot = new AlienShoot(this.positionX + 50, this.positionY);
+      AlienShoot shoot = new AlienShoot(this.positionX + 50, this.getLowerEdge());
       shoots.add(shoot);
     }
   }
 
   void letsAnimate() {
     this.alienRefresh();
-    this.removeOldMissiles();
     if(this.getLowerEdge() >= GameEngine.screenHeight){
       this.animate = false;
     }

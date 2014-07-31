@@ -21,4 +21,11 @@ abstract class AnimatedObjects {
     GameEngine.listOfNewAnimatedObject.add(this);
     GameEngine.animationStart();
   }
+
+  void impact() {
+    animate = false;
+  }
+
+  void objectRefresh(){
+  }
 }

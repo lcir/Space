@@ -34,8 +34,7 @@ class Hero extends GameEntity{
   }
 
   void heroRefresh() {
-    //The same with X axis.
-    this.positionY = (window.innerHeight * 0.95) - 110;
+    this.positionY = (window.innerHeight * 0.95) - 50;
   }
 
   void fireHeroBigLaserThing() {
@@ -44,21 +43,15 @@ class Hero extends GameEntity{
   }
 
   void fireHeroIntelligentMissiles() {
-
   }
 
   void heroIsAmazingFireBall() {
-
   }
 
   void letsAnimate() {
     this.heroRefresh();
-    this.removeOldMissiles();
   }
 
   void stylizeObjects(Element element) {
-   element.style.backgroundColor = "blue";
   }
-
-
 }

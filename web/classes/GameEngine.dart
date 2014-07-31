@@ -16,6 +16,7 @@ part "HeroShoot.dart";
 part "AlienShoot.dart";
 part "ResizeBodyDecorator.dart";
 part "StylizeGameEntities.dart";
+part "Shoot.dart";
 
 class GameEngine {
 
@@ -99,6 +100,7 @@ class GameEngine {
       if (animatedObjects.animate) {
         animatedObjects.letsAnimate();
       }
+      animatedObjects.objectRefresh();
     }
 
     GameEngine.requestAnimationFrame(_animationCore);

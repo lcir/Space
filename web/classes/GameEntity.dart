@@ -7,7 +7,7 @@ abstract class GameEntity extends AnimatedObjects {
 
   void stylizeObjects(Element element);
 
-  List shoots = new List();
+  List<Shoot> shoots = new List<Shoot>();
 
   void removeOldMissiles(){
     shoots.removeWhere((c) => !c.animate);
@@ -22,7 +22,12 @@ abstract class GameEntity extends AnimatedObjects {
   }
 
   void entitySmashed(){
-    this.shoots.clear();
     this.animate = false;
   }
+
+  void objectRefresh() {
+    this.removeOldMissiles();
+  }
+
+
 }

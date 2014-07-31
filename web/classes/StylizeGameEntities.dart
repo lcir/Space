@@ -13,14 +13,17 @@ class StylizeGameEntities {
 
   set stylize(GameEntity entity) {
     if (entity != null) {
+      entity.bodyWidth = double.parse(this.element.style.width);
+      entity.bodyHeight = double.parse(this.element.style.height);
+
       entity.stylizeObjects(this.element);
       scope
         ..watch('animate', (animate, _) => changeAnimation(animate), context: entity, canChangeModel: true);
     }
   }
 
-  void changeAnimation(bool animate){
-    if(!animate) {
+  void changeAnimation(bool animate) {
+    if (!animate) {
       this.element.hidden = true;
     }
   }

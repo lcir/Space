@@ -1,14 +1,16 @@
 #alien {
-    background-color: orangered;
     position: absolute;
-    border: 1px solid aquamarine;
     width: 100px;
-    height: 100px;}
-
+    height: 80px;
+    background-image: url("./img/alien.svg");
+    background-repeat:no-repeat;
+    background-size: 100%;
+}
 #alien_shoot {
     background-color: orangered;
     position: absolute;
     border: 2px solid orangered;
     border-radius: 20px;
     width: 1px;
-    height: 10px;}
+    height: 10px;
+}

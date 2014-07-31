@@ -1,10 +1,6 @@
 part of SpaceEngine;
 
-class HeroShoot extends AnimatedObjects {
-
-  impact() {
-    animate = false;
-  }
+class HeroShoot extends Shoot {
 
   HeroShoot(var positionX, var positionY):super.positions(positionX, positionY);
 
