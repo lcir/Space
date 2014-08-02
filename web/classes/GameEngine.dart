@@ -17,8 +17,10 @@ part "AlienShoot.dart";
 part "ResizeBodyDecorator.dart";
 part "StylizeGameEntities.dart";
 part "Shoot.dart";
+part "HelpDecorator.dart";
 
 class GameEngine {
+
 
   static final int LEFT = 97;
   static final int RIGHT = 100;
@@ -60,7 +62,7 @@ class GameEngine {
     if (amazingSpaceArmy != null) {
       for (Alien alien in amazingSpaceArmy.aliens) {
         if (alien.animate) {
-          if (alien.getLowerEdge() >= shoot.positionY ) {
+          if (alien.getLowerEdge() >= shoot.positionY) {
             alien.entitySmashed();
             shoot.impact();
 
@@ -87,9 +89,11 @@ class GameEngine {
 
   }
 
-  static
+  static void animationPause() {
+    isStarted = false;
+  }
 
-  void _animationCore() {
+  static void _animationCore() {
 
     listOfAnimatedObject.removeWhere((c) => !c.animate);
 
@@ -104,11 +108,10 @@ class GameEngine {
     }
 
     GameEngine.requestAnimationFrame(_animationCore);
+
   }
 
-  static
-
-  void requestAnimationFrame(fn) {
+  static void requestAnimationFrame(fn) {
     window.requestAnimationFrame((_) => fn());
   }
 }

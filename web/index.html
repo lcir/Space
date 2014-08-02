@@ -4,13 +4,92 @@
     <meta charset="UTF-8">
     <title></title>
     <link href="css/style.css" rel="stylesheet"/>
+    <link href="bootstrap/css/bootstrap.css" rel="stylesheet"/>
+    <link href="bootstrap/css/bootstrap.icon-large.css" rel="stylesheet"/>
     <script src="packages/shadow_dom/shadow_dom.min.js"></script>
     <script type="application/dart" src="space.dart"></script>
     <script type="text/javascript" src="packages/browser/dart.js"></script>
 </head>
 <body resize>
-<hero></hero>
+<nav class="nav-space">
+    <div class="row header-row">
+        <div class="span2 text-center nav-header">.: Space Invaders :.</div>
+        <div class="span12"></div>
+        <div class="span5 text-right nav-header"><span class="label label-important" help-decorator><i
+                class="icon-question-sign icon-white"></i> HELP</span></div>
+    </div>
+    <div>
+        <div class="resizer-nav">
 
-<space-army></space-army>
+            <div class="row-fluid">
+                <div class="span12">
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="span1"><img src="./img/alien.svg" class="alien-image"/></div>
+                    <div class="span3"><h1 class="page-header header-space">Space Invaders</h1></div>
+                    <div class="span8">
+                        <div class="row-fluid">
+                            <div class="span11 container-space">Lorem ipsum dolor sit amet, consectetur adipisicing
+                                elit, sed do
+                                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+                                quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                                Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+                                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
+                                qui officia deserunt mollit anim id est laborum.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span12">
+                    <div class="span1"></div>
+                    <div class="span3"></div>
+                    <div class="span8">
+
+                    </div>
+                </div>
+            </div>
+            <div class="row-fluid icon_block">
+                <div class="row-fluid">
+                    <div class="span12">
+
+                    </div>
+                </div>
+                <div class="row-fluid">
+                    <div class="span12">
+                        <div class="span4"></div>
+                        <div class="span8 text-right">
+                            <div class="row-fluid">
+                                <div class="span11 nav-header">Social contact for author of this Dart demo application
+                                    <img src="./img/social/email.png"/>
+                                    <img src="./img/social/Foursquare.png"/>
+                                    <img src="./img/social/Github.png"/>
+                                    <img src="./img/social/GooglePlus.png"/>
+                                    <img src="./img/social/Linkedin.png"/>
+                                    <img src="./img/social/Youtube.png"/>
+                                    <img src="./img/social/Twitter.png"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row footer-space">
+                <div class="span12">
+                    <div class="span1 nav-header label label-info text-left">Score: 0</div>
+                    <div class="span3 nav-header label label-inverse text-left">Score: 0</div>
+                    <div class="span7 nav-header label label-warning text-left">Score: 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+<div hidden="true" id="game-space">
+    <hero></hero>
+    <space-army></space-army>
+</div>
 </body>
 </html>
