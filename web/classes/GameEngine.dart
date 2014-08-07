@@ -18,9 +18,20 @@ part "ResizeBodyDecorator.dart";
 part "StylizeGameEntities.dart";
 part "Shoot.dart";
 part "HelpDecorator.dart";
+part "ResizeImageDecorator.dart";
+part "PageController.dart";
+part "HeroArmy.dart";
 
 class GameEngine {
 
+
+  //Getter and setter for test
+  static get gameScore => GameEngine.score;
+  static set gameScore(int score){
+    GameEngine.score = score;
+  }
+
+  static int score = 0;
 
   static final int LEFT = 97;
   static final int RIGHT = 100;
@@ -37,6 +48,7 @@ class GameEngine {
 
   static var isStarted = false;
 
+  static HeroArmy amazingHeroArmy;
   static SpaceArmy amazingSpaceArmy;
   static Hero absoluteHero;
 
@@ -65,6 +77,7 @@ class GameEngine {
           if (alien.getLowerEdge() >= shoot.positionY) {
             alien.entitySmashed();
             shoot.impact();
+            GameEngine.score += 1;
 
             print(alien);
             print(alien.positionX);

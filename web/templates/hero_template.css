@@ -1,7 +1,9 @@
 #heros {
     position: absolute;
     width: 100px;
-    height: 52px;}
+    height: 52px;
+    z-index: -2;
+}
 
 #shoot {
     background-color: orangered;
@@ -9,4 +11,5 @@
     border: 2px solid orangered;
     border-radius: 20px;
     width: 1px;
-    height: 10px;}
+    height: 10px;
+}

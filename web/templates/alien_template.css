@@ -5,6 +5,7 @@
     background-image: url("./img/alien.svg");
     background-repeat:no-repeat;
     background-size: 100%;
+    z-index: -2 ;
 }
 #alien_shoot {
     background-color: orangered;

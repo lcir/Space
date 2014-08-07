@@ -13,9 +13,12 @@ class StylizeGameEntities {
 
   set stylize(GameEntity entity) {
     if (entity != null) {
-      entity.bodyWidth = double.parse(this.element.style.width);
-      entity.bodyHeight = double.parse(this.element.style.height);
-
+      if (this.element.style.width.contains("px")) {
+        entity.bodyWidth = int.parse(this.element.style.width.replaceAll("px", ""));
+      }
+      if (this.element.style.height.contains("px")) {
+        entity.bodyHeight = int.parse(this.element.style.height.replaceAll("px", ""));
+      }
       entity.stylizeObjects(this.element);
       scope
         ..watch('animate', (animate, _) => changeAnimation(animate), context: entity, canChangeModel: true);

@@ -7,14 +7,24 @@ class SpaceArmy extends AnimatedObjects {
 
   SpaceArmy() {
     GameEngine.amazingSpaceArmy = this;
-
-    this.aliens.add(new Alien());
-
+    PageController.spaceArmy = this;
   }
 
   void letsAnimate() {
     aliens.removeWhere((c) => (!c.animate));
   }
 
+  int size(){
+    return aliens.length;
+  }
 
+  void initializeOfArmy(){
+    this.aliens.clear();
+
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+  }
 }

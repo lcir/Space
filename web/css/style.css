@@ -42,7 +42,7 @@ div {
 }
 
 .header-space {
-font-size: 50px;
+    font-size: 50px;
 
 }
 
@@ -68,4 +68,9 @@ font-size: 50px;
 }
 
 #game-space {
+}
+
+.arrow-block {
+    border: 1px;
+    border-color: #000000;
 }

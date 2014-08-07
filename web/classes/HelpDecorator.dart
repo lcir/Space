@@ -18,10 +18,10 @@ class HelpDecorator {
 
     tooltipElem = new DivElement();
 
-   tooltipElem.appendHtml("<h5>Application help</h5>");
+   tooltipElem.appendHtml("<h4>Game help</h4>");
 
     DivElement textSpan = new DivElement()
-      ..appendText("sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")
+      ..appendText("This game is controlled by 3 keys on keyboard. If you want turn left with the Ship, you must press key 'A'. If you want turn to right, press key 'D'. To shoot you must pres key 'Space'. Enjoy game.")
       ..style.color = "white"
       ..style.fontSize = "smaller"
       ..style.paddingBottom = "5px";

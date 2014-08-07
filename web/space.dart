@@ -14,6 +14,9 @@ class MyAppModule extends Module {
     type(ResizeBodyDecorator);
     type(StylizeGameEntities);
     type(HelpDecorator);
+    type(ResizeImageDecorator);
+    type(PageController);
+    type(HeroArmy);
   }
 
 
@@ -21,7 +24,6 @@ class MyAppModule extends Module {
 
 int top = 30;
 DivElement element = null;
-DivElement gameElement = null;
 DivElement buttonDiv = null;
 
 void main() {
@@ -29,19 +31,20 @@ void main() {
   window.onMouseWheel.listen(_mouseWheel);
 
   element = querySelector(".resizer-nav");
-  gameElement = querySelector("#game-space");
-  element.style.height = "${window.innerHeight}px";
+  element.style.height = "${window.innerHeight - 50}px";
 }
 
 void _mouseWheel(WheelEvent event) {
 
   bool move = false;
 
+  int elementHeight = int.parse(element.style.height.replaceAll("px", ""));
+
   if ((top < 30) && (event.deltaY > 0)) {
-    top += 10;
+    top += 20;
     gameStop();
-  } else if ((element.clientHeight + top > 100) && (event.deltaY < 0)) {
-    top -= 10;
+  } else if ((elementHeight + top > 100) && (event.deltaY < 0)) {
+    top -= 20;
     move = true;
     gameStop();
   }
@@ -72,18 +75,26 @@ void _mouseWheel(WheelEvent event) {
 
 void playButtonClick(MouseEvent event) {
   if (buttonDiv != null) {
-    buttonDiv.remove();
-    buttonDiv = null;
+    playButtonRemove();
     gameStart();
   }
 }
 
-void gameStart(){
-  gameElement.hidden = false;
+void playButtonRemove() {
+  if (buttonDiv != null) {
+    buttonDiv.remove();
+    buttonDiv = null;
+  }
+}
+
+
+void gameStart() {
+  GameEngine.amazingSpaceArmy.initializeOfArmy();
+  GameEngine.amazingHeroArmy.createNewHero();
   GameEngine.animationStart();
 }
 
-void gameStop(){
-  gameElement.hidden = true;
+void gameStop() {
   GameEngine.animationPause();
+  playButtonRemove();
 }
