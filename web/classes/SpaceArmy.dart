@@ -3,6 +3,10 @@ part of SpaceEngine;
 @Component(selector: 'space-army', templateUrl: 'templates/space_army_template.html', publishAs: 'space')
 class SpaceArmy extends AnimatedObjects {
 
+  void destroyArmy() {
+    this.aliens.clear();
+  }
+
   List<Alien> aliens = new List<Alien>();
 
   SpaceArmy() {
@@ -19,7 +23,7 @@ class SpaceArmy extends AnimatedObjects {
   }
 
   void initializeOfArmy(){
-    this.aliens.clear();
+    this.destroyArmy();
 
     this.aliens.add(new Alien());
     this.aliens.add(new Alien());

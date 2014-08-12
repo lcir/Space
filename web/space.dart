@@ -18,8 +18,6 @@ class MyAppModule extends Module {
     type(PageController);
     type(HeroArmy);
   }
-
-
 }
 
 int top = 30;
@@ -96,5 +94,8 @@ void gameStart() {
 
 void gameStop() {
   GameEngine.animationPause();
+  GameEngine.amazingSpaceArmy.destroyArmy();
+  GameEngine.amazingHeroArmy.destroyHero();
+
   playButtonRemove();
 }

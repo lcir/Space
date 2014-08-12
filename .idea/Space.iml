@@ -8,6 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/web/classes/packages" />
       <excludeFolder url="file://$MODULE_DIR$/web/css/packages" />
       <excludeFolder url="file://$MODULE_DIR$/web/img/packages" />
+      <excludeFolder url="file://$MODULE_DIR$/web/img/social/packages" />
       <excludeFolder url="file://$MODULE_DIR$/web/packages" />
       <excludeFolder url="file://$MODULE_DIR$/web/templates/packages" />
     </content>
