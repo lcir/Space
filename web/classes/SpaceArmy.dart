@@ -1,6 +1,6 @@
 part of SpaceEngine;
 
-@Component(selector: 'space-army', templateUrl: 'templates/space_army_template.html', publishAs: 'space')
+@Component(selector: 'space-army', templateUrl: 'templates/space_army_template.html', cssUrl: 'templates/alien_template.css',  publishAs: 'space')
 class SpaceArmy extends AnimatedObjects {
 
   void destroyArmy() {
@@ -25,11 +25,15 @@ class SpaceArmy extends AnimatedObjects {
   void initializeOfArmy(){
     this.destroyArmy();
 
-    int x = 200;
-    int y = 20;
-
     this.aliens.add(new Alien());
-
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
+    this.aliens.add(new Alien());
 
   }
 }

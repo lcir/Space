@@ -9,7 +9,6 @@ class MyAppModule extends Module {
   MyAppModule() {
     type(Hero);
     type(MovingObject);
-    type(Alien);
     type(SpaceArmy);
     type(ResizeBodyDecorator);
     type(StylizeGameEntities);

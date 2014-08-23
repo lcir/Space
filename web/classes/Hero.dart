@@ -1,7 +1,5 @@
 part of SpaceEngine;
 
-Random ran = new Random();
-
 @Component(selector: 'hero', templateUrl: 'templates/hero_template.html', cssUrl: 'templates/hero_template.css', publishAs: 'hero')
 class Hero extends GameEntity{
 
