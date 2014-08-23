@@ -25,10 +25,11 @@ class SpaceArmy extends AnimatedObjects {
   void initializeOfArmy(){
     this.destroyArmy();
 
+    int x = 200;
+    int y = 20;
+
     this.aliens.add(new Alien());
-    this.aliens.add(new Alien());
-    this.aliens.add(new Alien());
-    this.aliens.add(new Alien());
-    this.aliens.add(new Alien());
+
+
   }
 }

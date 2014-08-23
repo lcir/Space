@@ -23,11 +23,10 @@ part "PageController.dart";
 part "HeroArmy.dart";
 
 class GameEngine {
-
-
   //Getter and setter for test
   static get gameScore => GameEngine.score;
-  static set gameScore(int score){
+
+  static set gameScore(int score) {
     GameEngine.score = score;
   }
 
@@ -46,7 +45,7 @@ class GameEngine {
   static List<AnimatedObjects> listOfAnimatedObject = new List<AnimatedObjects>();
   static List<AnimatedObjects> listOfNewAnimatedObject = new List<AnimatedObjects>();
 
-  static var isStarted = false;
+  static bool isStarted = false;
 
   static HeroArmy amazingHeroArmy;
   static SpaceArmy amazingSpaceArmy;
@@ -74,19 +73,12 @@ class GameEngine {
     if (amazingSpaceArmy != null) {
       for (Alien alien in amazingSpaceArmy.aliens) {
         if (alien.animate) {
-          if (alien.getLowerEdge() >= shoot.positionY) {
-            alien.entitySmashed();
-            shoot.impact();
-            GameEngine.score += 1;
-
-            print(alien);
-            print(alien.positionX);
-            print(alien.positionY);
-            print(alien.getLowerEdge());
-
-            print(shoot);
-            print(shoot.positionX);
-            print(shoot.positionY);
+          if ((alien.getLowerEdge() >= shoot.positionY) && (alien.getHigherEdge() < shoot.positionY)) {
+            if (((alien.positionX) <= shoot.positionX) && ((alien.positionX + alien.bodyWidth) >= shoot.positionX)) {
+              alien.entitySmashed();
+              shoot.impact();
+              GameEngine.score += 1;
+            }
           }
         }
       }
@@ -94,12 +86,10 @@ class GameEngine {
   }
 
   static void animationStart() {
-
     if (!isStarted) {
       isStarted = true;
       _animationCore();
     }
-
   }
 
   static void animationPause() {
@@ -119,12 +109,10 @@ class GameEngine {
       }
       animatedObjects.objectRefresh();
     }
-
     GameEngine.requestAnimationFrame(_animationCore);
-
   }
 
-  static void requestAnimationFrame(fn) {
-    window.requestAnimationFrame((_) => fn());
+  static int requestAnimationFrame(fn) {
+    return window.requestAnimationFrame((_) => fn());
   }
 }

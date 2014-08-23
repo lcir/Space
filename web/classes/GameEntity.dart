@@ -22,7 +22,7 @@ abstract class GameEntity extends AnimatedObjects {
   }
 
   void entitySmashed(){
-    this.animate = false;
+    this.impact();
   }
 
   void objectRefresh() {
