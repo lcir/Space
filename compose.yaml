@@ -1,0 +1,23 @@
+services:
+  game:
+    build: .
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:${PORT:-3000}:3000"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b}
+    volumes:
+      - arena-data:/app/.data
+    depends_on:
+      - ollama
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_NO_CLOUD: 'true'
+      OLLAMA_NUM_PARALLEL: '1'
+    volumes:
+      - ollama-models:/root/.ollama
+volumes:
+  arena-data:
+  ollama-models:

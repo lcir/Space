@@ -10,13 +10,21 @@
 .pilot-bar{display:flex;align-items:center;gap:14px;margin:0 0 14px;font:10px monospace;color:#8093a9}.pilot-bar label{font-size:9px;letter-spacing:1px}.pilot-bar select{font:11px monospace;background:#121e2e;color:#b3ffdf;border:1px solid #354256;border-radius:4px;padding:8px}.pilot-bar span{margin-left:auto}@media(max-width:650px){.pilot-bar{flex-wrap:wrap;gap:8px}.pilot-bar span{width:100%;margin:0;font-size:9px}}
 
 #wingman-lives{color:#b9a6ff;font-size:17px}.hud [hidden]{display:none}@media(max-width:650px){.hud{gap:9px}.hud strong{font-size:13px}.hud #lives,#wingman-lives{font-size:10px;letter-spacing:0}.hud label{font-size:6px}.hud>div:nth-child(2){display:none}.hud button{width:26px;height:26px}}
+
+.header-actions a{color:#a1ffda;font:11px monospace;text-decoration:none}.agent-panel{border:1px solid #354256;border-radius:6px;padding:16px;margin-bottom:18px;color:#a8bbce;font:12px monospace}.agent-panel[hidden]{display:none}.agent-settings{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.agent-settings select,.agent-settings input{background:#121e2e;border:1px solid #354256;color:#c5e5d9;border-radius:4px;padding:8px;font:12px monospace;max-width:100%}.agent-panel button{padding:8px 12px}.agent-panel a{color:#a1ffda}.agent-panel p{line-height:1.6;overflow-wrap:anywhere}.agent-panel details{border-top:1px solid #354256;padding-top:12px}.agent-panel summary{cursor:pointer}.agent-panel #training-status{display:block;margin-top:10px}@media(max-width:650px){.header-actions{gap:10px}.header-actions a{font-size:9px}.agent-panel{font-size:10px;padding:12px}.agent-settings input{width:180px}.agent-settings{gap:6px}}
 </style>
 </head>
 <body>
-  <header><a class="brand" href="./"><span class="brand-icon">✦</span> SPACE<span class="edition">INVADERS REBORN · 2.1</span></a><div class="header-actions"><span class="online">● LOCAL SECTOR ONLINE</span><button id="sound" aria-pressed="false">Sound off</button></div></header>
+  <header><a class="brand" href="./"><span class="brand-icon">✦</span> SPACE<span class="edition">INVADERS REBORN · 3.0</span></a><div class="header-actions"><a id="arena-link" href="/arena">Agent arena ↗</a><span class="online">● LOCAL SECTOR ONLINE</span><button id="sound" aria-pressed="false">Sound off</button></div></header>
   <main>
     <div class="mission-line"><span>EARTH DEFENSE PROGRAM <b>/ 001</b></span><span>EST. 2014 · REBORN 2026</span></div>
     <div class="pilot-bar"><label for="mode">FLIGHT CONTROL</label><select id="mode"><option value="human">Human pilot</option><option value="ai">AI autopilot</option><option value="coop">Co-op · You + AI wingman</option></select><span id="pilot-help">You move. You fire.</span></div>
+    <section id="agent-panel" class="agent-panel" hidden aria-label="Agent controls">
+      <div id="arena-status" role="status">Connecting to arena…</div>
+      <div class="agent-settings"><label for="provider">Wingman</label><select id="provider"><option value="heuristic">Local pilot</option><option value="ollama">Ollama</option><option value="learned">Learned pilot</option><option value="external">External Codex / agent</option><option value="none">No autopilot</option></select><label for="model">Model</label><input id="model" list="models" value="qwen2.5:0.5b" maxlength="120"><datalist id="models"></datalist><button id="apply-agent">Apply</button></div>
+      <p id="agent-status">Choose a wingman provider.</p>
+      <details><summary>Learning and recordings</summary><p>Ollama saves strategy memory after matches. Local training optimizes a small controller using episode rewards; it does not retrain the language model.</p><p id="strategy"></p><button id="train">Train local pilot</button><span id="training-status" role="status"></span><p><a id="last-match">Match recordings appear after a mission.</a> · <a href="/api/matches" target="_blank">All results</a></p></details>
+    </section>
     <section class="arena" aria-label="Space Invaders game">
       <canvas id="game" width="960" height="680" tabindex="0" aria-label="Game field. Move with arrow keys or A and D. Space to fire. P to pause."></canvas>
       <div class="hud"><div><label>SCORE</label><strong id="score">000000</strong></div><div><label>BEST</label><strong id="best">000000</strong></div><div class="wave-hud"><label>SECTOR</label><strong id="wave">01</strong></div><div><label>YOUR HULL</label><strong id="lives" aria-label="3 lives">◆ ◆ ◆</strong></div><div id="wingman-hud" hidden><label>AI HULL</label><strong id="wingman-lives">◆ ◆ ◆</strong></div><button id="pause" aria-label="Pause game" disabled>Ⅱ</button></div>
@@ -89,7 +97,7 @@ class Game {
   get ships() { return [this.player, this.wingman].filter(Boolean); }
   constructor(random = Math.random) { this.random = random; this.state = 'ready'; this.reset(); this.state = 'ready'; }
   reset() {
-    this.score = 0; this.wave = 1; this.time = 0;
+    this.nextId = 1; this.score = 0; this.wave = 1; this.time = 0;
     this.player = createShip('player', this.coop ? 340 : 480);
     this.wingman = this.coop ? createShip('wingman', 620) : null;
     this.shots = []; this.drops = []; this.particles = []; this.events = [];
@@ -100,10 +108,10 @@ class Game {
   spawnWave() {
     this.direction = 1; this.enemyClock = 1.2; this.enemies = []; this.transition = 0;
     if (this.wave % 5 === 0) {
-      this.enemies.push({ x: 480, y: 150, w: 130, h: 65, hp: 24 + this.wave * 2, maxHp: 24 + this.wave * 2, boss: true, row: 0 });
+      this.enemies.push({ id: `boss-${this.wave}`, x: 480, y: 150, w: 130, h: 65, hp: 24 + this.wave * 2, maxHp: 24 + this.wave * 2, boss: true, row: 0 });
     } else {
       for (let row = 0; row < 4; row++) for (let col = 0; col < 9; col++)
-        this.enemies.push({ x: 224 + col * 64, y: 130 + row * 52, w: 34, h: 28, hp: 1, row });
+        this.enemies.push({ id: `${this.wave}-${row}-${col}`, x: 224 + col * 64, y: 130 + row * 52, w: 34, h: 28, hp: 1, row });
     }
     this.events.push({ type: 'wave', wave: this.wave });
   }
@@ -128,7 +136,7 @@ class Game {
       ship.x = clamp(ship.x + ((controls.right ? 1 : 0) - (controls.left ? 1 : 0)) * 520 * dt, 32, WIDTH - 32);
       if (controls.fire && ship.cooldown <= 0) {
         ship.cooldown = ship.power > 0 ? .09 : .15;
-        for (const vx of ship.power > 0 ? [-110, 0, 110] : [0]) this.shots.push({ x: ship.x, y: ship.y - 24, vx, vy: -960, w: 5, h: 20, friendly: true, owner: ship.id });
+        for (const vx of ship.power > 0 ? [-110, 0, 110] : [0]) this.shots.push({ id: 's' + this.nextId++, x: ship.x, y: ship.y - 24, vx, vy: -960, w: 5, h: 20, friendly: true, owner: ship.id });
         this.events.push({ type: 'fire', ship: ship.id });
       }
     }
@@ -145,7 +153,7 @@ class Game {
     if (this.enemyClock <= 0 && this.enemies.length) {
       this.enemyClock = Math.max(.22, 1.05 - this.wave * .065);
       const e = this.enemies[Math.floor(this.random() * this.enemies.length)];
-      for (const vx of e.boss ? [-130, 0, 130] : [0]) this.shots.push({ x: e.x, y: e.y + e.h / 2, vx, vy: Math.min(400, 205 + this.wave * 13), w: 8, h: 18, friendly: false });
+      for (const vx of e.boss ? [-130, 0, 130] : [0]) this.shots.push({ id: 's' + this.nextId++, x: e.x, y: e.y + e.h / 2, vx, vy: Math.min(400, 205 + this.wave * 13), w: 8, h: 18, friendly: false });
     }
     const useGrid = this.enemies.length >= 24 && this.shots.some(s => s.friendly);
     if (useGrid) this.grid.build(this.enemies);
@@ -158,8 +166,8 @@ class Game {
           if (target.hp <= 0) {
             this.score += target.boss ? 1000 : (4 - target.row) * 25;
             this.burst(target.x, target.y, target.boss ? '#ffa869' : '#9ef9d2', target.boss ? 60 : 18);
-            this.events.push({ type: 'hit' });
-            if (this.random() < .12 || target.boss) this.drops.push({ x: target.x, y: target.y, w: 24, h: 24, type: this.random() < .25 ? 'shield' : 'rapid' });
+            this.events.push({ type: 'hit', ship: shot.owner || 'player', points: target.boss ? 1000 : (4 - target.row) * 25 });
+            if (this.random() < .12 || target.boss) this.drops.push({ id: 'd' + this.nextId++, x: target.x, y: target.y, w: 24, h: 24, type: this.random() < .25 ? 'shield' : 'rapid' });
           }
         }
       } else {
@@ -543,17 +551,73 @@ function combineInput(human, automatic, mode) {
   return { ...human };
 }
 
+/** Network transport only. The server owns physics; the browser interpolates snapshots. */
+class OnlineSession {
+  constructor(onChange) {
+    this.onChange=onChange;this.connected=false;this.token=null;this.events=[];this.nextInput=0;this.delay=500;this.closed=false;this.connect();
+  }
+  connect() {
+    this.socket=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}/ws`);
+    this.socket.onopen=()=>{this.connected=true;this.delay=500;this.socket.send(JSON.stringify({type:'join'}));this.onChange();};
+    this.socket.onmessage=event=>{
+      try {
+        const message=JSON.parse(event.data);
+        if(message.type==='spectator'){this.token=null;this.error=null;}
+        if(message.type==='joined'){this.token=message.token;this.error=null;}
+        if(message.type==='error'){this.error=message.error;}
+        if(message.type==='state'){
+          const snapshot=message.observation;
+          this.previous=this.latest;this.latest=snapshot;this.receivedAt=performance.now();
+          this.previousLists={};
+          if(this.previous?.matchId===snapshot.matchId && this.previous.wave===snapshot.wave) for(const key of ['ships','enemies','shots','drops']) this.previousLists[key]=new Map((this.previous[key] || []).map(item=>[item.id,item]));
+          this.events.push(...message.events);if(this.events.length>100)this.events.splice(0,this.events.length-100);
+        }
+        this.onChange();
+      }catch{this.error='Invalid server message';}
+    };
+    this.socket.onclose=()=>{this.connected=false;this.token=null;this.onChange();if(!this.closed){setTimeout(()=>this.connect(),this.delay);this.delay=Math.min(5000,this.delay*2);}};
+    this.socket.onerror=()=>{this.error='Arena connection failed';};
+  }
+  async request(path,value) {
+    const response=await fetch(path,{method:value===undefined?'GET':'POST',headers:value===undefined?{}:{'Content-Type':'application/json'},body:value===undefined?undefined:JSON.stringify(value),signal:AbortSignal.timeout(10000)});
+    const data=await response.json();if(!response.ok)throw new Error(data.error);return data;
+  }
+  async start() {await this.request('/api/start',{mode:'coop'});this.token=null;this.socket.send(JSON.stringify({type:'join'}));}
+  async pause(command) {await this.request('/api/control',{command});}
+  sendInput(action,timestamp,force=false) {
+    if(this.latest?.mode==='ai' || !this.connected || !this.token || (!force && timestamp<this.nextInput))return;
+    this.nextInput=timestamp+33;
+    this.socket.send(JSON.stringify({type:'input',token:this.token,action,durationMs:250}));
+  }
+  drainEvents(){return this.events.splice(0);}
+  view(timestamp) {
+    if(!this.latest)return null;
+    const view={...this.latest}; const t=Math.max(0,Math.min(1,(timestamp-this.receivedAt)/50));
+    for(const key of ['ships','enemies','shots','drops'])view[key]=(this.latest[key] || []).map(item=>{
+      const previous=this.previousLists[key]?.get(item.id);if(!previous || !item.id)return item;
+      return {...item,x:previous.x+(item.x-previous.x)*t,y:previous.y+(item.y-previous.y)*t};
+    });
+    view.player=view.ships.find(ship=>ship.id==='player') || view.player;view.wingman=view.ships.find(ship=>ship.id==='wingman') || null;
+    if(!this.connected)view.state='paused';
+    return view;
+  }
+  close(){this.closed=true;this.socket.close();}
+}
+
 
 const elements = new Map();
 const $ = id => { if (id === 'game') return document.getElementById(id); if (!elements.has(id)) elements.set(id, document.getElementById(id)); return elements.get(id); };
 const loop = new FixedStepLoop();
-const game = new Game();
+let game = new Game();
 const renderer = new Renderer($('game'));
 const input = { left: false, right: false, fire: false };
 const agentInput = { left: false, right: false, fire: false };
 const wingmanAgent = { left: false, right: false, fire: false };
 let agentUntil = 0, wingmanUntil = 0, mode = 'human';
 let best = 0, noticeUntil = 0, muted = true, audio;
+const isOnline = location.pathname === '/arena' || new URLSearchParams(location.search).has('online');
+const session = isOnline ? new OnlineSession(() => {}) : null;
+let lastOnlineState = null;
 let inputTimestamp = 0, nextHud = 0, nextSave = 0, bestDirty = false;
 try { best = Number(localStorage.getItem('space-best')) || 0; } catch { /* Private modes may deny storage. */ }
 const scoreText = value => String(value).padStart(6, '0');
@@ -572,6 +636,7 @@ function sound(type) {
 }
 function clearInput() { for (const key of Object.keys(input)) { input[key] = false; agentInput[key] = false; wingmanAgent[key] = false; } agentUntil = 0; wingmanUntil = 0; }
 function setMode(value) {
+  if (session) throw new Error('The online arena uses two-ship co-op');
   if (!['human', 'ai', 'coop'].includes(value)) throw new TypeError('Mode must be human, ai or coop');
   loop.reset();
   const teamChanged = (mode === 'coop') !== (value === 'coop');
@@ -603,12 +668,14 @@ function sync() {
   $('pause').setAttribute('aria-label', game.state === 'paused' ? 'Resume game' : 'Pause game');
 }
 function pause() {
+  if (session) { clearInput(); session.pause(game.state === 'paused' ? 'resume' : 'pause').catch(reportError); return; }
   loop.reset(); game.togglePause(); clearInput();
   if (game.state === 'paused') showOverlay('MISSION ON HOLD', 'TAKE A<br>BREATHER<span>.</span>', 'Your sector can wait. Ready when you are.', 'Resume mission');
   else if (game.state === 'playing') { $('overlay').hidden = true; $('game').focus({ preventScroll: true }); }
   sync();
 }
 $('play').addEventListener('click', () => {
+  if (session) { (game.state === 'paused' ? session.pause('resume') : session.start()).catch(reportError); $('game').focus({preventScroll:true}); return; }
   loop.reset(); clearInput();
   if (game.state === 'paused') game.togglePause(); else game.reset();
   $('overlay').hidden = true; $('game').focus({ preventScroll: true }); sync();
@@ -621,12 +688,13 @@ $('sound').addEventListener('click', () => {
 });
 const keys = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ' ': 'fire' };
 window.addEventListener('keydown', e => {
+  if (e.target.closest?.('input,select,textarea,button')) return;
   if (keys[e.key] && game.state === 'playing' && e.target.tagName !== 'BUTTON') { e.preventDefault(); input[keys[e.key]] = true; }
   if ((e.key.toLowerCase() === 'p' || e.key === 'Escape') && !e.repeat) pause();
 });
 window.addEventListener('keyup', e => { if (keys[e.key]) input[keys[e.key]] = false; });
-window.addEventListener('blur', () => { clearInput(); if (game.state === 'playing') pause(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden && game.state === 'playing') pause(); });
+window.addEventListener('blur', () => { clearInput(); if (game.state === 'playing' && !session) pause(); else if(session) session.sendInput({left:false,right:false,fire:false}, performance.now(), true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && game.state === 'playing' && !session) pause(); });
 for (const button of document.querySelectorAll('[data-action]')) {
   button.addEventListener('pointerdown', e => {
     e.preventDefault(); button.setPointerCapture(e.pointerId);
@@ -645,8 +713,18 @@ function updateGame(dt) {
 }
 function frame(timestamp) {
   inputTimestamp = timestamp;
-  loop.advance(timestamp, updateGame, game.state === 'playing');
-  for (const event of game.events.splice(0)) {
+  if (session) {
+    const action={...input}; if(timestamp<agentUntil)for(const key of Object.keys(action))action[key] ||= agentInput[key];
+    session.sendInput(action,timestamp);
+    game=session.view(timestamp) || game;
+    mode=game.mode || 'coop';
+    if(game.state!==lastOnlineState){
+      if(game.state==='playing')$('overlay').hidden=true;
+      else if(game.state==='paused')showOverlay('MISSION ON HOLD','TAKE A<br>BREATHER<span>.</span>','The shared arena is paused.','Resume mission');
+      lastOnlineState=game.state;
+    }
+  } else loop.advance(timestamp, updateGame, game.state === 'playing');
+  for (const event of (session ? session.drainEvents() : game.events.splice(0))) {
     sound(event.type);
     if (event.type === 'wave' || event.type === 'power') {
       $('notice').textContent = event.type === 'wave' ? (event.wave % 5 === 0 ? 'WARNING / MOTHERSHIP' : `SECTOR ${String(event.wave).padStart(2, '0')} / ENGAGE`) : event.power === 'shield' ? 'HULL REPAIRED + SHIELD' : 'TRIPLE LASER ONLINE';
@@ -665,7 +743,7 @@ function frame(timestamp) {
   }
   if (noticeUntil && timestamp > noticeUntil) { $('notice').textContent = ''; noticeUntil = 0; }
   // HUD need only change at 10 Hz; gameplay/rendering stay at display refresh.
-  if (timestamp >= nextHud) { sync(); nextHud = timestamp + 100; }
+  if (timestamp >= nextHud) { sync(); syncArena(); nextHud = timestamp + 100; }
   renderer.recordFrame(timestamp, game.state === 'playing');
   renderer.render(game, timestamp / 1000);
   requestAnimationFrame(frame);
@@ -674,13 +752,14 @@ sync(); requestAnimationFrame(frame);
 
 /** Browser-agent integration. Snapshots are copies; commands use normal gameplay. */
 window.spaceInvaders = Object.freeze({
-  version: 1, build: '2.1.0',
+  version: 1, build: '3.0.0', online: isOnline,
   getState: () => structuredClone({ state: game.state, mode, score: game.score, best, lives: game.lives, wave: game.wave, time: game.time, width: 960, height: 680, player: game.player, wingman: game.wingman, enemies: game.enemies, shots: game.shots, drops: game.drops, power: game.power, invincible: game.invincible, performance: renderer.getStats() }),
   start: () => $('play').click(),
-  pause: () => { if (game.state === 'playing') pause(); },
+  pause: () => { if (game.state === 'playing' && !session) pause(); else if(session) session.sendInput({left:false,right:false,fire:false}, performance.now(), true); },
   resume: () => { if (game.state === 'paused') pause(); },
   setMode,
   setInput: (action = {}, durationMs = 200, ship = 'player') => {
+    if (session && ship === 'wingman') throw new Error('Claim the network wingman through /api/claim');
     if (!['player', 'wingman'].includes(ship)) throw new TypeError('Ship must be player or wingman');
     const target = ship === 'wingman' ? wingmanAgent : agentInput;
     for (const key of Object.keys(target)) target[key] = action[key] === true;
@@ -689,6 +768,36 @@ window.spaceInvaders = Object.freeze({
   },
   release: clearInput,
 });
+
+function reportError(error) { $('arena-status').textContent=error.message; }
+function syncArena() {
+  if(!session)return;
+  const info=session.latest?.agent;
+  $('arena-status').textContent=!session.connected?'Disconnected — reconnecting…':session.error || `Connected · ${info?.provider || 'local'} · ${info?.role || 'wingman'}`;
+  if(info){
+    if(!$('agent-panel').dataset.initialized){$('provider').value=info.provider;$('model').value=info.ollama.model;$('agent-panel').dataset.initialized='true';}
+    $('mode').value=session.latest.mode;
+    $('pilot-help').textContent=session.latest.mode==='ai'?'Solo agent mission · spectator view':'Server arena · you fly green · agent flies violet';
+    const pilot=info.ollama;
+    $('agent-status').textContent=info.provider==='ollama'?`${pilot.model} · ${pilot.status}${pilot.latencyMs?' · '+pilot.latencyMs+' ms':''}${pilot.lastError?' · '+pilot.lastError:''} · control: ${info.controlSource}`:info.provider==='external'?`External agent: ${info.external?.name || 'waiting for a controller'}${info.external?.commandFresh?' · active':' · local fallback until new commands'}`:info.provider==='learned'?info.learned?`Learned policy · ${info.learned.episodes} training episodes`:'No learned policy yet — train a pilot first.':info.provider;
+    $('strategy').textContent=pilot.memory?.strategy || 'No strategy memory yet.';
+    const learning=info.learning;
+    $('training-status').textContent=learning.status==='training'?`Training ${learning.generation || 0}/${learning.generations} · game continues independently`:learning.status==='ready'?`Training reward ${learning.result.trainingReward.toFixed(1)} · held-out reward ${learning.result.validationReward.toFixed(1)}`:learning.error || '';
+    $('train').disabled=learning.status==='training';
+  }
+  if(session.latest?.lastSummary && $('last-match').dataset.id!==session.latest.lastSummary.id){
+    const summary=session.latest.lastSummary;$('last-match').dataset.id=summary.id;
+    $('last-match').textContent=`Last match: ${summary.score} points · reward ${JSON.stringify(summary.rewards)} · Download recording`;
+    $('last-match').href=`/api/matches/${summary.id}/download`;
+  }
+}
+if(session){
+  $('agent-panel').hidden=false;$('arena-link').hidden=true;$('mode').value='coop';$('mode').disabled=true;
+  $('pilot-help').textContent='Server arena · you fly green · agent flies violet';
+  $('apply-agent').addEventListener('click',()=>session.request('/api/config',{provider:$('provider').value,model:$('model').value}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
+  $('train').addEventListener('click',()=>session.request('/api/train',{generations:5,population:8,seconds:30}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
+  session.request('/api/models').then(data=>{if(!data.available){$('agent-status').textContent=data.error;return;}for(const name of data.models){const option=document.createElement('option');option.value=name;$('models').append(option);}}).catch(reportError);
+} else if(location.protocol==='file:') $('arena-link').hidden=true;
 </script>
 </body>
 </html>

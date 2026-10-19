@@ -23,7 +23,7 @@ export class Game {
   get ships() { return [this.player, this.wingman].filter(Boolean); }
   constructor(random = Math.random) { this.random = random; this.state = 'ready'; this.reset(); this.state = 'ready'; }
   reset() {
-    this.score = 0; this.wave = 1; this.time = 0;
+    this.nextId = 1; this.score = 0; this.wave = 1; this.time = 0;
     this.player = createShip('player', this.coop ? 340 : 480);
     this.wingman = this.coop ? createShip('wingman', 620) : null;
     this.shots = []; this.drops = []; this.particles = []; this.events = [];
@@ -34,10 +34,10 @@ export class Game {
   spawnWave() {
     this.direction = 1; this.enemyClock = 1.2; this.enemies = []; this.transition = 0;
     if (this.wave % 5 === 0) {
-      this.enemies.push({ x: 480, y: 150, w: 130, h: 65, hp: 24 + this.wave * 2, maxHp: 24 + this.wave * 2, boss: true, row: 0 });
+      this.enemies.push({ id: `boss-${this.wave}`, x: 480, y: 150, w: 130, h: 65, hp: 24 + this.wave * 2, maxHp: 24 + this.wave * 2, boss: true, row: 0 });
     } else {
       for (let row = 0; row < 4; row++) for (let col = 0; col < 9; col++)
-        this.enemies.push({ x: 224 + col * 64, y: 130 + row * 52, w: 34, h: 28, hp: 1, row });
+        this.enemies.push({ id: `${this.wave}-${row}-${col}`, x: 224 + col * 64, y: 130 + row * 52, w: 34, h: 28, hp: 1, row });
     }
     this.events.push({ type: 'wave', wave: this.wave });
   }
@@ -62,7 +62,7 @@ export class Game {
       ship.x = clamp(ship.x + ((controls.right ? 1 : 0) - (controls.left ? 1 : 0)) * 520 * dt, 32, WIDTH - 32);
       if (controls.fire && ship.cooldown <= 0) {
         ship.cooldown = ship.power > 0 ? .09 : .15;
-        for (const vx of ship.power > 0 ? [-110, 0, 110] : [0]) this.shots.push({ x: ship.x, y: ship.y - 24, vx, vy: -960, w: 5, h: 20, friendly: true, owner: ship.id });
+        for (const vx of ship.power > 0 ? [-110, 0, 110] : [0]) this.shots.push({ id: 's' + this.nextId++, x: ship.x, y: ship.y - 24, vx, vy: -960, w: 5, h: 20, friendly: true, owner: ship.id });
         this.events.push({ type: 'fire', ship: ship.id });
       }
     }
@@ -79,7 +79,7 @@ export class Game {
     if (this.enemyClock <= 0 && this.enemies.length) {
       this.enemyClock = Math.max(.22, 1.05 - this.wave * .065);
       const e = this.enemies[Math.floor(this.random() * this.enemies.length)];
-      for (const vx of e.boss ? [-130, 0, 130] : [0]) this.shots.push({ x: e.x, y: e.y + e.h / 2, vx, vy: Math.min(400, 205 + this.wave * 13), w: 8, h: 18, friendly: false });
+      for (const vx of e.boss ? [-130, 0, 130] : [0]) this.shots.push({ id: 's' + this.nextId++, x: e.x, y: e.y + e.h / 2, vx, vy: Math.min(400, 205 + this.wave * 13), w: 8, h: 18, friendly: false });
     }
     const useGrid = this.enemies.length >= 24 && this.shots.some(s => s.friendly);
     if (useGrid) this.grid.build(this.enemies);
@@ -92,8 +92,8 @@ export class Game {
           if (target.hp <= 0) {
             this.score += target.boss ? 1000 : (4 - target.row) * 25;
             this.burst(target.x, target.y, target.boss ? '#ffa869' : '#9ef9d2', target.boss ? 60 : 18);
-            this.events.push({ type: 'hit' });
-            if (this.random() < .12 || target.boss) this.drops.push({ x: target.x, y: target.y, w: 24, h: 24, type: this.random() < .25 ? 'shield' : 'rapid' });
+            this.events.push({ type: 'hit', ship: shot.owner || 'player', points: target.boss ? 1000 : (4 - target.row) * 25 });
+            if (this.random() < .12 || target.boss) this.drops.push({ id: 'd' + this.nextId++, x: target.x, y: target.y, w: 24, h: 24, type: this.random() < .25 ? 'shield' : 'rapid' });
           }
         }
       } else {
