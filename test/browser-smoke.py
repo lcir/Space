@@ -5,18 +5,21 @@ Run from repository root: python test/browser-smoke.py
 """
 import json
 import os
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
 
 ROOT = Path.cwd()
-OUT = ROOT / 'test-results'
+OUT = ROOT / 'test-results' / ('webgl' if '--webgl' in sys.argv else 'canvas' if '--canvas' in sys.argv else 'auto')
 OUT.mkdir(exist_ok=True)
 
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH', '/usr/bin/chromium'), headless=True, args=['--no-sandbox'])
     page = browser.new_page(viewport={'width': 1440, 'height': 1100})
     errors = []
+    if '--canvas' in sys.argv:
+        page.add_init_script("const getContext=HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl'||type==='webgl2'?null:getContext.call(this,type,...args);};")
     page.on('pageerror', lambda error: errors.append(str(error)))
     def route(request):
         path = urlparse(request.request.url).path.lstrip('/') or 'index.html'
@@ -27,7 +30,7 @@ with sync_playwright() as p:
         else:
             request.fulfill(status=404, body='Not found')
     page.route('http://game.test/**', route)
-    page.goto('http://game.test/')
+    page.goto('http://game.test/?renderer=webgl' if '--webgl' in sys.argv else 'http://game.test/')
     page.wait_for_function('window.spaceInvaders?.getState().state === "ready"')
     page.screenshot(path=str(OUT / 'desktop-ready.png'))
     page.get_by_role('button', name='Launch mission').click()
@@ -71,11 +74,29 @@ with sync_playwright() as p:
     before = page.evaluate('spaceInvaders.getState().player.x')
     page.mouse.down(); page.wait_for_timeout(200); page.mouse.up()
     assert page.evaluate('spaceInvaders.getState().player.x') < before
-    page.goto('http://game.test/dist/space-invaders.html')
+    page.goto('http://game.test/dist/space-invaders.html?renderer=webgl' if '--webgl' in sys.argv else 'http://game.test/dist/space-invaders.html')
     page.wait_for_function('window.spaceInvaders?.getState().state === "ready"')
     page.get_by_role('button', name='Launch mission').click()
     assert page.evaluate('spaceInvaders.getState().state') == 'playing'
     page.screenshot(path=str(OUT / 'portable.png'))
+    stats = page.evaluate('spaceInvaders.getState().performance')
+    if '--webgl' in sys.argv:
+        assert stats['backend'] == 'webgl', stats
+    if stats['backend'] == 'webgl':
+        assert stats['drawCalls'] == 1
+        restored = page.evaluate('''async () => {
+          const gl = document.getElementById('game').getContext('webgl');
+          const extension = gl.getExtension('WEBGL_lose_context');
+          if (!extension) return true;
+          extension.loseContext();
+          await new Promise(resolve => setTimeout(resolve, 150));
+          extension.restoreContext();
+          await new Promise(resolve => setTimeout(resolve, 400));
+          return !gl.isContextLost() && gl.getError() === gl.NO_ERROR;
+        }''')
+        assert restored, 'WebGL context did not recover'
+    if '--canvas' in sys.argv:
+        assert stats['backend'] == 'canvas2d'
     assert not errors, errors
-    print(json.dumps({'result': 'passed', 'page_errors': errors, 'screenshots': str(OUT)}))
+    print(json.dumps({'result': 'passed', 'page_errors': errors, 'renderer': stats, 'screenshots': str(OUT)}))
     browser.close()

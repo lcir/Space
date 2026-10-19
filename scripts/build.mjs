@@ -3,7 +3,7 @@ await rm('dist', { recursive: true, force: true });
 await mkdir('dist');
 for (const path of ['index.html', 'src']) await cp(path, `dist/${path}`, { recursive: true });
 // A portable edition can also be opened directly without a server or tooling.
-const modules = await Promise.all(['engine', 'loop', 'renderer', 'pilot', 'main'].map(name => readFile(`src/${name}.js`, 'utf8')));
+const modules = await Promise.all(['collision-grid', 'engine', 'loop', 'quality', 'canvas-renderer', 'webgl-renderer', 'renderer', 'pilot', 'main'].map(name => readFile(`src/${name}.js`, 'utf8')));
 const js = modules.map(code => code.replace(/^import .*;\n/gm, '').replace(/^export /gm, '')).join('\n');
 const css = await readFile('src/style.css', 'utf8');
 const html = (await readFile('index.html', 'utf8'))

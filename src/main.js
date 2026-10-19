@@ -4,7 +4,7 @@ import { Renderer } from './renderer.js';
 import { pilotInput } from './pilot.js';
 
 const elements = new Map();
-const $ = id => { if (!elements.has(id)) elements.set(id, document.getElementById(id)); return elements.get(id); };
+const $ = id => { if (id === 'game') return document.getElementById(id); if (!elements.has(id)) elements.set(id, document.getElementById(id)); return elements.get(id); };
 const loop = new FixedStepLoop();
 const game = new Game();
 const renderer = new Renderer($('game'));
@@ -125,6 +125,7 @@ function frame(timestamp) {
   if (noticeUntil && timestamp > noticeUntil) { $('notice').textContent = ''; noticeUntil = 0; }
   // HUD need only change at 10 Hz; gameplay/rendering stay at display refresh.
   if (timestamp >= nextHud) { sync(); nextHud = timestamp + 100; }
+  renderer.recordFrame(timestamp, game.state === 'playing');
   renderer.render(game, timestamp / 1000);
   requestAnimationFrame(frame);
 }
@@ -132,8 +133,8 @@ sync(); requestAnimationFrame(frame);
 
 /** Browser-agent integration. Snapshots are copies; commands use normal gameplay. */
 window.spaceInvaders = Object.freeze({
-  version: 1,
-  getState: () => structuredClone({ state: game.state, mode, score: game.score, best, lives: game.lives, wave: game.wave, time: game.time, width: 960, height: 680, player: game.player, wingman: game.wingman, enemies: game.enemies, shots: game.shots, drops: game.drops, power: game.power, invincible: game.invincible }),
+  version: 1, build: '2.1.0',
+  getState: () => structuredClone({ state: game.state, mode, score: game.score, best, lives: game.lives, wave: game.wave, time: game.time, width: 960, height: 680, player: game.player, wingman: game.wingman, enemies: game.enemies, shots: game.shots, drops: game.drops, power: game.power, invincible: game.invincible, performance: renderer.getStats() }),
   start: () => $('play').click(),
   pause: () => { if (game.state === 'playing') pause(); },
   resume: () => { if (game.state === 'paused') pause(); },

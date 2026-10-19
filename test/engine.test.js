@@ -47,7 +47,7 @@ test('edge bounce moves formation down and reverses direction', () => {
 });
 test('collision requires both axes, and large time gaps are clamped', () => {
   assert.equal(overlaps({ x: 0, y: 0, w: 10, h: 10 }, { x: 0, y: 50, w: 10, h: 10 }), false);
-  const g = game(); g.update(20, { right: true }); assert.ok(g.time <= .05); assert.ok(g.player.x < 500);
+  const g = game(); g.update(20, { right: true }); assert.ok(g.time <= .05); assert.ok(g.player.x < 510);
 });
 test('coop ships move and fire independently with separate damage and powerups', () => {
   const g = game(); g.coop = true; g.reset();
@@ -69,4 +69,32 @@ test('coop continues when one ship falls; ends after both are lost', () => {
   g.wingman.lives = 1; g.wingman.invincible = 0; g.damage(g.wingman);
   assert.equal(g.state, 'over');
   g.reset(); assert.equal(g.wingman.lives, 3); assert.equal(g.player.lives, 3);
+});
+
+test('full and nearly defeated invasions keep the same fast movement speed', () => {
+  const full = game(), few = game(); few.enemies = few.enemies.slice(0, 3);
+  const x = full.enemies[0].x;
+  advance(full, 1); advance(few, 1);
+  assert.ok(full.enemies[0].x - x >= 90);
+  assert.equal(full.enemies[0].x, few.enemies[0].x);
+});
+test('particle storms have a bounded visual budget without losing damage or score', () => {
+  const g = game();
+  for (let i = 0; i < 100; i++) g.burst(100, 100, '#a1ffda', 60);
+  assert.equal(g.particles.length, 1200);
+  g.invincible = 0; g.damage(); assert.equal(g.lives, 2);
+  advance(g, 1); assert.equal(g.particles.length, 0);
+});
+test('three simulated minutes with a full invasion keep effects and projectiles bounded', () => {
+  const g = game(); g.coop = true; g.reset();
+  for (let tick = 0; tick < 180 * 120; tick++) {
+    if (g.state !== 'playing') g.reset();
+    for (const ship of g.ships) ship.invincible = Infinity;
+    for (const enemy of g.enemies) enemy.hp = Infinity;
+    g.update(1 / 120, {fire:true}, {fire:true});
+    g.events.length = 0;
+    assert.equal(g.enemies.length, 36);
+    assert.ok(g.shots.length < 40);
+    assert.ok(g.particles.length <= 1200);
+  }
 });

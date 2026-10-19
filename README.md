@@ -43,18 +43,22 @@ npm run build
 node scripts/serve.mjs --dist
 ```
 
-`dist/` is a self-contained static site; deploy its contents to any static host, including a subdirectory. The game makes no external requests, uses no credentials, and works offline once served locally. The renderer uses Canvas 2D with depth effects, rather than a WebGL dependency. Current Chrome, Firefox, Safari and Edge are the intended browsers.
+`dist/` is a self-contained static site; deploy its contents to any static host, including a subdirectory. The game makes no external requests, uses no credentials, and works offline once served locally. The renderer batches sprites through WebGL when hardware acceleration is available, with an automatic Canvas 2D fallback for unsupported or software GPUs. Neither backend requires an external library. Current Chrome, Firefox, Safari and Edge are the intended browsers.
 
 ## Structure
 
 - `src/engine.js`: deterministic, frame-rate-independent simulation in a 960 × 680 world; injected random source for tests.
-- `src/renderer.js`: procedural Canvas drawing with device-pixel-ratio scaling.
+- `src/renderer.js`: automatic renderer selection and performance telemetry.
+- `src/webgl-renderer.js`: texture-atlas sprite batching in a single draw call.
+- `src/canvas-renderer.js`: procedural assets and Canvas 2D fallback.
+- `src/quality.js`: adaptive resolution/effects, separate from simulation rules.
+- `src/collision-grid.js`: reused broad-phase bins for laser impacts.
 - `src/main.js`: keyboard/pointer input, UI, pause, optional Web Audio and best-score persistence.
 - `src/style.css`: responsive shell, HUD and touch controls.
 - `test/engine.test.js`: combat, progression, pause, bounds, powerups and restart regression coverage.
 - `scripts/`: dependency-free development server and static build.
 
-The former Dart/AngularDart sources, Bootstrap bundle, IDE settings and obsolete dependency manifests were removed from the active tree. They remain available in Git history at commit `8eb7c69b485ff3abbe8d1b00a8939cebe095fe89`. This intentionally replaces the old application rather than attempting to run its discontinued toolchain.
+The original Dart/AngularDart project is preserved under `legacy/angular-dart/` and in Git history at commit `8eb7c69b485ff3abbe8d1b00a8939cebe095fe89`. The runnable browser game uses the modules in `src/`; the legacy archive is not part of its build.
 
 ## Browser-agent API (Codex, Playwright, or another agent)
 
@@ -84,10 +88,28 @@ spaceInvaders.setInput({ left: true, fire: true }, 250, 'wingman');
 
 Optional real-browser regression: install Python Playwright and Chromium, run `npm run build`, then `python test/browser-smoke.py`. It covers keyboard input, pause, co-op, agent control, audio UI, mobile layout and the portable build. The Python dependency is only for this optional test, not for playing or building.
 
-## Performance and timing
+## Performance and timing (2.1)
 
-The simulation advances at a fixed 120 Hz, independently of display refresh. A frame can catch up at most 250 ms (30 bounded steps); pausing clears time debt. At 15, 30, 60 and 144 rendering FPS, the same one-second input sequence produces identical simulation state. This fixes slow motion caused by discarding time from frames longer than 50 ms.
+The full 36-invader formation now moves at **96 world pixels/second in sector 1**, independent of how many enemies remain. Previously the first sector started at 29 px/s and accelerated toward 92 px/s as enemies died; that made a full invasion feel much slower even at 60 FPS. Sector progression still increases difficulty. Player movement is now 520 px/s, lasers 960 px/s, standard fire interval 150 ms, and transitions between cleared waves 900 ms.
 
-Glow-heavy alien, mothership and laser sprites, plus the static planet/background, are baked into offscreen canvases once. The visible canvas has a 1.5-million-pixel budget and a DPR cap of 1.5. ResizeObserver updates its dimensions outside the render loop. The HUD updates at 10 Hz, high-score writes are batched, and human mode does not calculate unused AI steering.
+Simulation runs at a fixed 120 Hz. Frames catch up at most 250 ms (30 bounded steps); pause clears time debt. Rendering at 15, 30, 60 and 144 FPS yields identical game state for identical one-second input. Rendering quality never reduces enemy count, combat accuracy, or simulation speed.
 
-An initial 4.5-second headless Chromium comparison at a 1440×1100 viewport and device scale 2 measured a render-call median of 1.6 ms before and 0.3 ms after, and p95 of 2.3 ms before and 0.8 ms after. These are local measurements, not a guarantee for other hardware. The browser smoke test also passes after these changes. Reproduce a sample with `python test/performance.py .`; run the command again with the path to another checkout to compare revisions under the same browser conditions.
+Hardware WebGL batches the backdrop, stars, invaders, ships, shots and particles into one atlas/buffer and **one draw call per frame**. Unsupported/failed WebGL and recognized software GPUs use the Canvas fallback. If an unidentified GPU stays slow even at low quality, automatic mode falls back to Canvas. Lower frame rates reduce only canvas resolution, stars and decorative particles; quality recovers gradually. Visual particles have a 1,200-item cap. The HUD runs at 10 Hz, persistence is batched, collision bins avoid scanning every enemy for each laser, and AI steering avoids intermediate arrays.
+
+### Verify a full invasion
+
+```sh
+npm test
+npm run build
+python test/browser-smoke.py
+python test/browser-smoke.py --webgl
+python test/full-invasion.py . --soak
+```
+
+The load test retains all enemies throughout each scene. It reports actual frame cadence and p95 frame intervals for 3 enemies, 36 enemies, and 144 enemies plus 256 shots and 1,000 particles. `--soak` holds the heaviest scene for 30 seconds. It fails if the full invasion renders over 20% slower than the sparse scene. Run `--canvas` to exercise compatibility or `--webgl` to force GPU batching. The browser smoke test exercises both rendering paths and WebGL context restoration. Python Playwright and Chromium are optional development dependencies only.
+
+`spaceInvaders.getState().performance` reports the selected backend, FPS, quality, backing resolution and GPU draw calls. Diagnostic URL options `?renderer=canvas2d` and `?renderer=webgl` override automatic selection. The normal game chooses the backend itself, including when opening the downloaded portable HTML.
+
+A local 1440×1100, device-scale-2 Chromium test measured approximately **60 FPS with 36 enemies**, and **60 FPS with 144 enemies, 256 shots and 1,000 particles** using automatic mode (Canvas selected for the environment's software GPU). These are measurements on this environment, not a hardware-independent guarantee. The prior render-call microbenchmark alone was insufficient to validate whole-frame performance; the full-invasion test replaces it for acceptance.
+
+A web server is supported via `npm start`, but cannot fix local GPU rendering or enemy-speed rules. The portable HTML remains usable without Node, Docker, model credentials or external requests. Docker adds no rendering acceleration and is not required.
