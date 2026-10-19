@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080c19">
+  <meta name="description" content="An interstellar arcade. Defend Earth in Space Invaders: Reborn.">
+  <title>SPACE / Invaders Reborn</title>
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <header><a class="brand" href="./"><span class="brand-icon">✦</span> SPACE<span class="edition">INVADERS REBORN · 2.1</span></a><div class="header-actions"><span class="online">● LOCAL SECTOR ONLINE</span><button id="sound" aria-pressed="false">Sound off</button></div></header>
+  <main>
+    <div class="mission-line"><span>EARTH DEFENSE PROGRAM <b>/ 001</b></span><span>EST. 2014 · REBORN 2026</span></div>
+    <div class="pilot-bar"><label for="mode">FLIGHT CONTROL</label><select id="mode"><option value="human">Human pilot</option><option value="ai">AI autopilot</option><option value="coop">Co-op · You + AI wingman</option></select><span id="pilot-help">You move. You fire.</span></div>
+    <section class="arena" aria-label="Space Invaders game">
+      <canvas id="game" width="960" height="680" tabindex="0" aria-label="Game field. Move with arrow keys or A and D. Space to fire. P to pause."></canvas>
+      <div class="hud"><div><label>SCORE</label><strong id="score">000000</strong></div><div><label>BEST</label><strong id="best">000000</strong></div><div class="wave-hud"><label>SECTOR</label><strong id="wave">01</strong></div><div><label>YOUR HULL</label><strong id="lives" aria-label="3 lives">◆ ◆ ◆</strong></div><div id="wingman-hud" hidden><label>AI HULL</label><strong id="wingman-lives">◆ ◆ ◆</strong></div><button id="pause" aria-label="Pause game" disabled>Ⅱ</button></div>
+      <div id="overlay" class="overlay">
+        <div class="eyebrow" id="eyebrow">INCOMING TRANSMISSION</div>
+        <h1 id="title">THEY’RE<br>BACK<span>.</span></h1>
+        <p id="description">One ship. An entire invasion.<br>Give them a reason to fear Earth.</p>
+        <button id="play" class="primary">Launch mission <span>↗</span></button>
+        <small id="hint">MOVE ← → &nbsp; / &nbsp; FIRE SPACE &nbsp; / &nbsp; PAUSE P</small>
+      </div>
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
+      <div class="arena-bottom"><span>◈ <b>ORBITAL DEFENSE</b></span><span id="weapon">STANDARD LASER</span></div>
+    </section>
+    <div class="touch-controls" aria-label="Touch controls"><button data-action="left" aria-label="Move left">←</button><button data-action="right" aria-label="Move right">→</button><button data-action="fire" class="fire">FIRE ⊕</button></div>
+    <footer><div><span class="key">A</span><span class="key">D</span> or <span class="key">←</span><span class="key">→</span> <span>Move</span></div><div><span class="key wide">SPACE</span><span>Fire</span></div><div><span class="key">P</span><span>Pause</span></div><p>HOLD THE LINE. PROTECT YOUR WORLD.</p></footer>
+  </main>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
