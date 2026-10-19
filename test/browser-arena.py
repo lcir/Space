@@ -14,6 +14,27 @@ with sync_playwright() as p:
  page.wait_for_function('window.spaceInvaders?.online && document.getElementById("arena-status").textContent.includes("Connected")')
  page.get_by_role('button',name='Launch mission').click()
  page.wait_for_function('spaceInvaders.getState().state === "playing" && spaceInvaders.getState().wingman')
+ # Every online mode must be selectable, including reclaiming human control after AI.
+ for mode in ['human','ai','coop','ai','human','coop']:
+  page.select_option('#mode',mode)
+  page.wait_for_function('(mode) => spaceInvaders.getState().mode === mode && !document.getElementById("mode").disabled',arg=mode)
+  state=page.request.get(base+'/api/state').json()
+  assert state['mode']==mode
+  assert bool(state.get('wingman'))==(mode=='coop')
+  if mode!='ai':
+   page.wait_for_timeout(100)
+   start=page.evaluate('spaceInvaders.getState().player.x')
+   page.keyboard.down('ArrowLeft');page.wait_for_timeout(150);page.keyboard.up('ArrowLeft');page.wait_for_timeout(100)
+   assert page.evaluate('spaceInvaders.getState().player.x')<start
+  else:
+   page.get_by_role('button',name='Pause game',exact=True).click()
+   page.wait_for_function('spaceInvaders.getState().state === "paused"')
+   page.keyboard.press('Enter')
+   page.wait_for_function('spaceInvaders.getState().state === "playing"')
+   assert page.request.get(base+'/api/state').json()['mode']=='ai'
+   with page.expect_response(base+'/api/start') as restarted:
+    page.evaluate('spaceInvaders.start()')
+   assert restarted.value.json()['mode']=='ai'
  start=page.evaluate('spaceInvaders.getState().player.x')
  page.keyboard.down('ArrowLeft');page.wait_for_timeout(200);page.keyboard.up('ArrowLeft');page.wait_for_timeout(150)
  assert page.evaluate('spaceInvaders.getState().player.x')<start

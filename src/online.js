@@ -29,7 +29,17 @@ export class OnlineSession {
     const response=await fetch(path,{method:value===undefined?'GET':'POST',headers:value===undefined?{}:{'Content-Type':'application/json'},body:value===undefined?undefined:JSON.stringify(value),signal:AbortSignal.timeout(10000)});
     const data=await response.json();if(!response.ok)throw new Error(data.error);return data;
   }
-  async start() {await this.request('/api/start',{mode:'coop'});this.token=null;this.socket.send(JSON.stringify({type:'join'}));}
+  async start(mode=this.latest?.mode || 'coop') {
+    if(!this.connected)throw new Error('Arena is disconnected; wait for reconnection');
+    if(this.starting)return;
+    this.starting=true;
+    try {
+      const snapshot=await this.request('/api/start',{mode});
+      this.previous=null;this.previousLists={};this.latest=snapshot;this.receivedAt=performance.now();
+      this.token=null;this.error=null;this.nextInput=0;
+      this.socket.send(JSON.stringify({type:'join'}));
+    } finally {this.starting=false;}
+  }
   async pause(command) {await this.request('/api/control',{command});}
   sendInput(action,timestamp,force=false) {
     if(this.latest?.mode==='ai' || !this.connected || !this.token || (!force && timestamp<this.nextInput))return;

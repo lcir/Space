@@ -35,8 +35,13 @@ function sound(type) {
 }
 function clearInput() { for (const key of Object.keys(input)) { input[key] = false; agentInput[key] = false; wingmanAgent[key] = false; } agentUntil = 0; wingmanUntil = 0; }
 function setMode(value) {
-  if (session) throw new Error('The online arena uses two-ship co-op');
   if (!['human', 'ai', 'coop'].includes(value)) throw new TypeError('Mode must be human, ai or coop');
+  if (session) {
+    clearInput();
+    const changing=session.start(value);
+    syncArena();
+    return changing.then(()=>$('game').focus({preventScroll:true})).finally(syncArena);
+  }
   loop.reset();
   const teamChanged = (mode === 'coop') !== (value === 'coop');
   mode = value; game.coop = value === 'coop'; $('mode').value = value; clearInput();
@@ -48,7 +53,7 @@ function setMode(value) {
   if (game.state === 'playing') $('game').focus({ preventScroll: true });
   $('pilot-help').textContent = { human: 'You move. You fire.', ai: 'AI moves, aims and fires. Enjoy the show.', coop: 'Two ships. You fly green. AI flies violet. Shared score.' }[mode];
 }
-$('mode').addEventListener('change', e => setMode(e.target.value));
+$('mode').addEventListener('change', e => Promise.resolve(setMode(e.target.value)).catch(reportError));
 function showOverlay(eyebrow, title, description, button) {
   $('overlay').hidden = false; $('eyebrow').textContent = eyebrow; $('title').innerHTML = title;
   $('description').textContent = description; $('play').innerHTML = button + ' <span>↗</span>';
@@ -172,11 +177,12 @@ function reportError(error) { $('arena-status').textContent=error.message; }
 function syncArena() {
   if(!session)return;
   const info=session.latest?.agent;
+  $('mode').disabled=!session.connected || session.starting;
   $('arena-status').textContent=!session.connected?'Disconnected — reconnecting…':session.error || `Connected · ${info?.provider || 'local'} · ${info?.role || 'wingman'}`;
   if(info){
     if(!$('agent-panel').dataset.initialized){$('provider').value=info.provider;$('model').value=info.ollama.model;$('agent-panel').dataset.initialized='true';}
-    $('mode').value=session.latest.mode;
-    $('pilot-help').textContent=session.latest.mode==='ai'?'Solo agent mission · spectator view':'Server arena · you fly green · agent flies violet';
+    if(!session.starting)$('mode').value=session.latest.mode;
+    $('pilot-help').textContent={human:'Server arena · you fly green · no AI ship',ai:'Solo agent mission · spectator view',coop:'Server arena · you fly green · agent flies violet'}[session.latest.mode];
     const pilot=info.ollama;
     $('agent-status').textContent=info.provider==='ollama'?`${pilot.model} · ${pilot.status}${pilot.latencyMs?' · '+pilot.latencyMs+' ms':''}${pilot.lastError?' · '+pilot.lastError:''} · control: ${info.controlSource}`:info.provider==='external'?`External agent: ${info.external?.name || 'waiting for a controller'}${info.external?.commandFresh?' · active':' · local fallback until new commands'}`:info.provider==='learned'?info.learned?`Learned policy · ${info.learned.episodes} training episodes`:'No learned policy yet — train a pilot first.':info.provider;
     $('strategy').textContent=pilot.memory?.strategy || 'No strategy memory yet.';
