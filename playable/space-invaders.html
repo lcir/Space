@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080c19">
+  <meta name="description" content="An interstellar arcade. Defend Earth in Space Invaders: Reborn.">
+  <title>SPACE / Invaders Reborn</title>
+  <style>:root{color-scheme:dark;font-family:Inter,Arial,sans-serif;background:#080c15;color:#e6edf7;font-synthesis:none}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 45%,#14213455,transparent 70%),#080c15}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;color:inherit;border:1px solid #ffffff24;background:#ffffff05;border-radius:5px;cursor:pointer}button:hover{border-color:#80f4cc;background:#80f4cc12}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:2px solid #a1ffda;outline-offset:4px}button:disabled{opacity:.35;cursor:default}header{height:94px;max-width:1440px;margin:auto;padding:0 6%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff0d}.brand{text-decoration:none;color:#fff;font-weight:800;letter-spacing:6px;font-size:22px;display:flex;align-items:center;gap:13px}.brand-icon{color:#94ffce;font-size:32px}.edition{font:9px monospace;letter-spacing:2px;border-left:1px solid #ffffff30;padding-left:18px;margin-left:5px;color:#8b97aa}.header-actions{display:flex;align-items:center;gap:26px}.header-actions button{font:11px monospace;padding:10px 14px}.online{font:9px monospace;letter-spacing:1.3px;color:#83bda9}main{max-width:1152px;padding:34px 32px 0;margin:auto}.mission-line{display:flex;justify-content:space-between;font:9px monospace;letter-spacing:1.7px;color:#788495;margin-bottom:17px}.mission-line b{color:#b8c4d4;font-weight:normal}.arena{position:relative;border:1px solid #354256;border-radius:9px;overflow:hidden;background:#070e1b;box-shadow:0 24px 100px #0008;aspect-ratio:960/680}canvas{width:100%;height:100%;display:block;touch-action:none}.hud{position:absolute;top:0;left:0;right:0;display:flex;gap:35px;align-items:center;padding:26px 30px;background:linear-gradient(#080d1de8,transparent);pointer-events:none}.hud label{display:block;color:#788b9f;font:9px monospace;letter-spacing:2px;margin-bottom:7px}.hud strong{font:22px monospace;letter-spacing:2px}.hud>div:first-child strong{color:#a0ffda}.wave-hud{margin-left:auto}.hud #lives{font-size:17px;color:#a0ffda}.hud button{pointer-events:auto;width:36px;height:36px}.overlay{position:absolute;inset:85px 0 40px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;background:radial-gradient(ellipse,#070f22c9,transparent 75%)}.overlay[hidden]{display:none}.eyebrow{font:10px monospace;letter-spacing:3px;color:#9effda;display:flex;align-items:center;gap:12px}.eyebrow:before{content:'';height:1px;width:30px;background:#9effda}h1{font-size:clamp(42px,7.5vw,92px);line-height:.94;letter-spacing:-5px;margin:27px 0 18px;font-weight:900}h1 span{color:#a1ffda}.overlay p{color:#9aabbd;font-size:14px;line-height:1.8;margin:0 0 27px}.primary{background:#a1ffda;color:#071e19;border:0;padding:18px 24px;font-size:13px;font-weight:700;min-width:225px;display:flex;justify-content:space-between;gap:30px;box-shadow:0 0 35px #a1ffda16}.primary:hover{background:#c1ffe8;color:#071e19}.primary span{font-size:18px}.overlay small{font:9px monospace;color:#65798f;letter-spacing:1px;margin-top:22px}.arena-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:16px 25px;font:9px monospace;letter-spacing:2px;color:#6d859d;background:linear-gradient(transparent,#080d1d)}.arena-bottom b{font-weight:normal;color:#8da0b2}.notice{position:absolute;top:26%;left:10%;right:10%;text-align:center;font:18px monospace;letter-spacing:3px;color:#a1ffda;pointer-events:none;text-shadow:0 0 20px #48ffc8}footer{display:flex;align-items:center;gap:24px;color:#788698;font-size:10px;padding:25px 0 35px}footer>div{display:flex;gap:5px;align-items:center}footer>div>span:last-child{margin-left:7px}.key{border:1px solid #ffffff20;border-bottom-width:3px;border-radius:4px;padding:5px;min-width:24px;text-align:center;color:#a5b3c5;font:10px monospace}.wide{padding:5px 12px}footer p{margin-left:auto;font:8px monospace;letter-spacing:1.6px}.touch-controls{display:none;gap:10px;padding-top:15px}.touch-controls button{min-width:65px;min-height:52px;touch-action:none;user-select:none;font:22px monospace}.touch-controls .fire{margin-left:auto;color:#a1ffda;padding:0 25px;font-size:14px}@media(pointer:coarse){.touch-controls{display:flex}}@media(max-width:650px){header{height:75px;padding:0 20px}.brand{font-size:16px;letter-spacing:3px;gap:8px}.edition,.online{display:none}main{padding:22px 12px 0}.mission-line{font-size:7px;letter-spacing:.6px}.mission-line>span:last-child{display:none}.arena{aspect-ratio:3/4}.hud{gap:15px;padding:18px 14px}.hud strong{font-size:15px}.hud label{font-size:7px;letter-spacing:1px}.hud #lives{font-size:12px}.hud button{width:30px;height:30px}.overlay{inset:70px 0 35px}h1{font-size:64px;letter-spacing:-3px}.eyebrow{font-size:8px;letter-spacing:2px}.overlay p{font-size:12px}.overlay small{font-size:7px}.arena-bottom{font-size:7px;padding:14px}.touch-controls{display:flex}footer{gap:12px;flex-wrap:wrap;font-size:9px}footer p{width:100%;margin:4px 0 0}.notice{font-size:13px}.key{padding:4px;min-width:20px}}
+.pilot-bar{display:flex;align-items:center;gap:14px;margin:0 0 14px;font:10px monospace;color:#8093a9}.pilot-bar label{font-size:9px;letter-spacing:1px}.pilot-bar select{font:11px monospace;background:#121e2e;color:#b3ffdf;border:1px solid #354256;border-radius:4px;padding:8px}.pilot-bar span{margin-left:auto}@media(max-width:650px){.pilot-bar{flex-wrap:wrap;gap:8px}.pilot-bar span{width:100%;margin:0;font-size:9px}}
+
+#wingman-lives{color:#b9a6ff;font-size:17px}.hud [hidden]{display:none}@media(max-width:650px){.hud{gap:9px}.hud strong{font-size:13px}.hud #lives,#wingman-lives{font-size:10px;letter-spacing:0}.hud label{font-size:6px}.hud>div:nth-child(2){display:none}.hud button{width:26px;height:26px}}
+</style>
+</head>
+<body>
+  <header><a class="brand" href="./"><span class="brand-icon">✦</span> SPACE<span class="edition">INVADERS REBORN</span></a><div class="header-actions"><span class="online">● LOCAL SECTOR ONLINE</span><button id="sound" aria-pressed="false">Sound off</button></div></header>
+  <main>
+    <div class="mission-line"><span>EARTH DEFENSE PROGRAM <b>/ 001</b></span><span>EST. 2014 · REBORN 2026</span></div>
+    <div class="pilot-bar"><label for="mode">FLIGHT CONTROL</label><select id="mode"><option value="human">Human pilot</option><option value="ai">AI autopilot</option><option value="coop">Co-op · You + AI wingman</option></select><span id="pilot-help">You move. You fire.</span></div>
+    <section class="arena" aria-label="Space Invaders game">
+      <canvas id="game" width="960" height="680" tabindex="0" aria-label="Game field. Move with arrow keys or A and D. Space to fire. P to pause."></canvas>
+      <div class="hud"><div><label>SCORE</label><strong id="score">000000</strong></div><div><label>BEST</label><strong id="best">000000</strong></div><div class="wave-hud"><label>SECTOR</label><strong id="wave">01</strong></div><div><label>YOUR HULL</label><strong id="lives" aria-label="3 lives">◆ ◆ ◆</strong></div><div id="wingman-hud" hidden><label>AI HULL</label><strong id="wingman-lives">◆ ◆ ◆</strong></div><button id="pause" aria-label="Pause game" disabled>Ⅱ</button></div>
+      <div id="overlay" class="overlay">
+        <div class="eyebrow" id="eyebrow">INCOMING TRANSMISSION</div>
+        <h1 id="title">THEY’RE<br>BACK<span>.</span></h1>
+        <p id="description">One ship. An entire invasion.<br>Give them a reason to fear Earth.</p>
+        <button id="play" class="primary">Launch mission <span>↗</span></button>
+        <small id="hint">MOVE ← → &nbsp; / &nbsp; FIRE SPACE &nbsp; / &nbsp; PAUSE P</small>
+      </div>
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
+      <div class="arena-bottom"><span>◈ <b>ORBITAL DEFENSE</b></span><span id="weapon">STANDARD LASER</span></div>
+    </section>
+    <div class="touch-controls" aria-label="Touch controls"><button data-action="left" aria-label="Move left">←</button><button data-action="right" aria-label="Move right">→</button><button data-action="fire" class="fire">FIRE ⊕</button></div>
+    <footer><div><span class="key">A</span><span class="key">D</span> or <span class="key">←</span><span class="key">→</span> <span>Move</span></div><div><span class="key wide">SPACE</span><span>Fire</span></div><div><span class="key">P</span><span>Pause</span></div><p>HOLD THE LINE. PROTECT YOUR WORLD.</p></footer>
+  </main>
+  <script type="module">const WIDTH = 960, HEIGHT = 680;
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+function overlaps(a, b) {
+  return Math.abs(a.x - b.x) < (a.w + b.w) / 2 && Math.abs(a.y - b.y) < (a.h + b.h) / 2;
+}
+
+/** Pure, fixed-world simulation. Rendering, input and persistence live outside it. */
+function createShip(id, x) {
+  return { id, x, y: 594, w: 38, h: 30, lives: 3, invincible: 2, power: 0, cooldown: 0 };
+}
+
+class Game {
+  get lives() { return this.player.lives; }
+  set lives(value) { this.player.lives = value; }
+  get invincible() { return this.player.invincible; }
+  set invincible(value) { this.player.invincible = value; }
+  get power() { return this.player.power; }
+  set power(value) { this.player.power = value; }
+  get ships() { return [this.player, this.wingman].filter(Boolean); }
+  constructor(random = Math.random) { this.random = random; this.state = 'ready'; this.reset(); this.state = 'ready'; }
+  reset() {
+    this.score = 0; this.wave = 1; this.time = 0;
+    this.player = createShip('player', this.coop ? 340 : 480);
+    this.wingman = this.coop ? createShip('wingman', 620) : null;
+    this.shots = []; this.drops = []; this.particles = []; this.events = [];
+    this.transition = 0;
+    this.state = 'playing'; this.spawnWave();
+  }
+  spawnWave() {
+    this.direction = 1; this.enemyClock = 1.2; this.enemies = []; this.transition = 0;
+    if (this.wave % 5 === 0) {
+      this.enemies.push({ x: 480, y: 150, w: 130, h: 65, hp: 24 + this.wave * 2, maxHp: 24 + this.wave * 2, boss: true, row: 0 });
+    } else {
+      for (let row = 0; row < 4; row++) for (let col = 0; col < 9; col++)
+        this.enemies.push({ x: 224 + col * 64, y: 130 + row * 52, w: 34, h: 28, hp: 1, row });
+    }
+    this.events.push({ type: 'wave', wave: this.wave });
+  }
+  togglePause() { if (this.state === 'playing') this.state = 'paused'; else if (this.state === 'paused') this.state = 'playing'; }
+  burst(x, y, color, count = 18) {
+    for (let i = 0; i < count; i++) { const angle = this.random() * Math.PI * 2, speed = 35 + this.random() * 150;
+      this.particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: .3 + this.random() * .5, color }); }
+  }
+  damage(ship = this.player) {
+    if (ship.invincible > 0 || ship.lives <= 0 || this.state !== 'playing') return;
+    ship.lives--; ship.invincible = 2; ship.power = 0;
+    this.burst(ship.x, ship.y, '#ff8f97', 32); this.events.push({ type: 'damage', ship: ship.id });
+    if (this.ships.every(s => s.lives <= 0)) { this.state = 'over'; this.events.push({ type: 'over' }); }
+  }
+  update(dt, input = {}, wingmanInput = {}) {
+    if (this.state !== 'playing') return;
+    dt = clamp(dt, 0, .05); this.time += dt;
+    for (const ship of this.ships) {
+      if (ship.lives <= 0) continue;
+      const controls = ship === this.player ? input : wingmanInput;
+      ship.cooldown -= dt; ship.invincible -= dt; ship.power = Math.max(0, ship.power - dt);
+      ship.x = clamp(ship.x + ((controls.right ? 1 : 0) - (controls.left ? 1 : 0)) * 390 * dt, 32, WIDTH - 32);
+      if (controls.fire && ship.cooldown <= 0) {
+        ship.cooldown = ship.power > 0 ? .13 : .22;
+        for (const vx of ship.power > 0 ? [-110, 0, 110] : [0]) this.shots.push({ x: ship.x, y: ship.y - 24, vx, vy: -720, w: 5, h: 20, friendly: true, owner: ship.id });
+        this.events.push({ type: 'fire', ship: ship.id });
+      }
+    }
+    const speed = Math.min(145, 24 + this.wave * 5 + (36 - this.enemies.length) * 1.8);
+    if (this.enemies.some(e => e.x + e.w / 2 >= 914 || e.x - e.w / 2 <= 46)) {
+      this.direction *= -1;
+      for (const e of this.enemies) { e.x = clamp(e.x, 47 + e.w / 2, 913 - e.w / 2); if (!e.boss) e.y += 21; }
+    }
+    for (const e of this.enemies) {
+      e.x += this.direction * speed * dt;
+      if (e.y + e.h / 2 >= this.player.y - 20) { for (const ship of this.ships) ship.lives = 0; this.state = 'over'; this.events.push({ type: 'over' }); return; }
+    }
+    this.enemyClock -= dt;
+    if (this.enemyClock <= 0 && this.enemies.length) {
+      this.enemyClock = Math.max(.22, 1.05 - this.wave * .065);
+      const e = this.enemies[Math.floor(this.random() * this.enemies.length)];
+      for (const vx of e.boss ? [-130, 0, 130] : [0]) this.shots.push({ x: e.x, y: e.y + e.h / 2, vx, vy: Math.min(400, 205 + this.wave * 13), w: 8, h: 18, friendly: false });
+    }
+    for (const shot of this.shots) {
+      shot.x += shot.vx * dt; shot.y += shot.vy * dt;
+      if (shot.friendly) {
+        const target = this.enemies.find(e => e.hp > 0 && overlaps(shot, e));
+        if (target) {
+          shot.dead = true; target.hp--; this.burst(shot.x, shot.y, '#a1ffda', 5);
+          if (target.hp <= 0) {
+            this.score += target.boss ? 1000 : (4 - target.row) * 25;
+            this.burst(target.x, target.y, target.boss ? '#ffa869' : '#9ef9d2', target.boss ? 60 : 18);
+            this.events.push({ type: 'hit' });
+            if (this.random() < .12 || target.boss) this.drops.push({ x: target.x, y: target.y, w: 24, h: 24, type: this.random() < .25 ? 'shield' : 'rapid' });
+          }
+        }
+      } else {
+        const ship = this.ships.find(s => s.lives > 0 && overlaps(shot, s));
+        if (ship) { shot.dead = true; this.damage(ship); }
+      }
+    }
+    this.enemies = this.enemies.filter(e => e.hp > 0);
+    this.shots = this.shots.filter(s => !s.dead && s.y > -30 && s.y < HEIGHT + 30 && s.x > -30 && s.x < WIDTH + 30);
+    for (const drop of this.drops) {
+      drop.y += 110 * dt;
+      const ship = this.ships.find(s => s.lives > 0 && overlaps(drop, s));
+      if (ship) {
+        drop.dead = true;
+        if (drop.type === 'shield') { ship.lives = Math.min(3, ship.lives + 1); ship.invincible = 3; } else ship.power = 8;
+        this.events.push({ type: 'power', power: drop.type, ship: ship.id });
+      }
+    }
+    this.drops = this.drops.filter(d => !d.dead && d.y < HEIGHT + 30);
+    for (const p of this.particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
+    this.particles = this.particles.filter(p => p.life > 0);
+    if (!this.enemies.length && this.state === 'playing') {
+      this.transition += dt;
+      if (this.transition > 1.8) { this.wave++; this.shots = []; for (const ship of this.ships) ship.invincible = 2; this.spawnWave(); }
+    }
+  }
+}
+
+const alien = ['00100100','00011000','00111100','01111110','11011011','11111111','10100101','00100100'];
+class Renderer {
+  constructor(canvas) {
+    this.canvas = canvas; this.ctx = canvas.getContext('2d');
+    this.stars = Array.from({ length: 160 }, (_, i) => ({ x: (i * 173.31) % WIDTH, y: (i * 83.17) % HEIGHT, z: .2 + (i % 7) / 7 }));
+  }
+  render(game, time) {
+    const { canvas, ctx: c } = this;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    c.setTransform(w / WIDTH, 0, 0, h / HEIGHT, 0, 0);
+    c.fillStyle = '#080f20'; c.fillRect(0, 0, WIDTH, HEIGHT);
+    const glow = c.createRadialGradient(650, 230, 0, 650, 230, 600);
+    glow.addColorStop(0, '#19364b88'); glow.addColorStop(1, '#080f2000'); c.fillStyle = glow; c.fillRect(0, 0, WIDTH, HEIGHT);
+    for (const s of this.stars) { c.globalAlpha = .2 + s.z * .55; c.fillStyle = '#c5e7ff'; c.fillRect(s.x, (s.y + time * (5 + s.z * 13)) % HEIGHT, s.z * 1.7, s.z * 1.7); }
+    c.globalAlpha = 1;
+    // Shaded orbital body, entirely procedural and available offline.
+    c.save(); c.translate(780, 210); c.rotate(-.35);
+    const planet = c.createRadialGradient(-35, -40, 3, 0, 0, 115);
+    planet.addColorStop(0, '#375564'); planet.addColorStop(.55, '#1d3445'); planet.addColorStop(1, '#0b1327');
+    c.fillStyle = planet; c.beginPath(); c.arc(0, 0, 110, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#83e5d626'; c.lineWidth = 1; c.beginPath(); c.ellipse(0, 0, 165, 32, 0, 0, Math.PI * 2); c.stroke(); c.restore();
+    // Perspective runway gives depth without requiring WebGL or downloaded assets.
+    c.strokeStyle = '#4a9fbd12'; c.lineWidth = 1;
+    for (let i = -8; i <= 8; i++) { c.beginPath(); c.moveTo(480 + i * 28, 470); c.lineTo(480 + i * 180, HEIGHT); c.stroke(); }
+    for (let i = 0; i < 7; i++) { const y = 470 + ((i * 31 + time * 18) % 210); c.beginPath(); c.moveTo(0, y); c.lineTo(WIDTH, y); c.stroke(); }
+    if (game.state === 'ready') { this.ship(480, 548, time, false); return; }
+    for (const e of game.enemies) {
+      c.save(); c.translate(e.x, e.y + Math.sin(time * 3 + e.row) * 3);
+      if (e.boss) {
+        c.shadowColor = '#ff947d'; c.shadowBlur = 22;
+        c.fillStyle = '#694658'; c.beginPath(); c.ellipse(0, 0, 68, 26, 0, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#ffae91'; c.beginPath(); c.ellipse(0, -12, 30, 22, 0, Math.PI, Math.PI * 2); c.fill();
+        c.shadowBlur = 0; c.fillStyle = '#362c40'; c.fillRect(-65, 40, 130, 4); c.fillStyle = '#ffae91'; c.fillRect(-65, 40, 130 * e.hp / e.maxHp, 4);
+      } else {
+        const colors = ['#f4ad90', '#b9a6ed', '#78d8df', '#9cf4cb'];
+        c.shadowColor = colors[e.row]; c.shadowBlur = 12;
+        alien.forEach((row, y) => [...row].forEach((pixel, x) => { if (pixel === '1') { c.fillStyle = '#163b4d'; c.fillRect((x - 4) * 4.5 + 2, (y - 4) * 4 + 3, 4, 4); c.fillStyle = colors[e.row]; c.fillRect((x - 4) * 4.5, (y - 4) * 4, 4, 3); } }));
+      }
+      c.restore();
+    }
+    for (const ship of game.ships) {
+      if (ship.lives > 0 && (ship.invincible <= 0 || Math.floor(time * 12) % 2)) this.ship(ship.x, ship.y, time, ship.invincible > 0, ship.id === 'wingman');
+    }
+    for (const s of game.shots) { c.fillStyle = s.friendly ? (s.owner === 'wingman' ? '#b9b0ff' : '#b6ffe4') : '#ff9b9a'; c.shadowColor = c.fillStyle; c.shadowBlur = 12; c.fillRect(s.x - s.w / 2, s.y - s.h / 2, s.w, s.h); } c.shadowBlur = 0;
+    for (const d of game.drops) { c.save(); c.translate(d.x, d.y); c.rotate(time); c.strokeStyle = d.type === 'shield' ? '#96c9ff' : '#f4d292'; c.strokeRect(-12, -12, 24, 24); c.restore(); c.fillStyle = '#fff'; c.font = '15px monospace'; c.textAlign = 'center'; c.fillText(d.type === 'shield' ? '+' : 'ϟ', d.x, d.y + 5); }
+    for (const p of game.particles) { c.globalAlpha = Math.min(1, p.life * 2); c.fillStyle = p.color; c.fillRect(p.x, p.y, 3, 3); } c.globalAlpha = 1;
+  }
+  ship(x, y, time, shield, wingman = false) {
+    const c = this.ctx; c.save(); c.translate(x, y);
+    c.fillStyle = wingman ? '#b9a6ff' : '#a1ffda'; c.shadowColor = c.fillStyle; c.shadowBlur = 18;
+    c.beginPath(); c.moveTo(-8, 14); c.lineTo(0, 30 + Math.sin(time * 45) * 8); c.lineTo(8, 14); c.fill(); c.shadowBlur = 0;
+    c.fillStyle = '#648fa6'; c.beginPath(); c.moveTo(0, -25); c.lineTo(28, 21); c.lineTo(0, 12); c.lineTo(-28, 21); c.closePath(); c.fill();
+    c.fillStyle = '#c9e7eb'; c.beginPath(); c.moveTo(0, -25); c.lineTo(0, 12); c.lineTo(-28, 21); c.closePath(); c.fill();
+    c.fillStyle = wingman ? '#b9a6ff' : '#74f7d1'; c.beginPath(); c.moveTo(0, -13); c.lineTo(6, 5); c.lineTo(-6, 5); c.closePath(); c.fill();
+    c.fillStyle = wingman ? '#b9a6ff' : '#a1ffda'; c.font = '10px monospace'; c.textAlign = 'center'; c.fillText(wingman ? 'AI / 02' : 'YOU / 01', 0, 52);
+    if (shield) { c.strokeStyle = '#9cffe577'; c.beginPath(); c.arc(0, 0, 39, 0, Math.PI * 2); c.stroke(); } c.restore();
+  }
+}
+
+
+/** Local heuristic pilot. No model, account or network is required. */
+function pilotInput(game, player = game.player) {
+  if (!player || player.lives <= 0) return { left: false, right: false, fire: false };
+  const { enemies, shots } = game;
+  let target = enemies.reduce((best, e) => !best || Math.abs(e.x - player.x) < Math.abs(best.x - player.x) ? e : best, null);
+  let destination = target?.x ?? WIDTH / 2;
+  if (player.id === 'wingman' && game.player.lives > 0 && Math.abs(destination - game.player.x) < 75) {
+    destination = clamp(game.player.x + (game.player.x < WIDTH / 2 ? 110 : -110), 40, WIDTH - 40);
+  }
+  const threat = shots.filter(s => !s.friendly && s.y < player.y && s.y > player.y - 180)
+    .map(s => ({ shot: s, impact: s.x + s.vx * ((player.y - s.y) / s.vy) }))
+    .find(t => Math.abs(t.impact - player.x) < 45);
+  if (threat) destination = clamp(player.x + (player.x < threat.impact ? -95 : 95), 40, WIDTH - 40);
+  return {
+    left: destination < player.x - 12,
+    right: destination > player.x + 12,
+    fire: enemies.length > 0,
+  };
+}
+
+function combineInput(human, automatic, mode) {
+  if (mode === 'ai') return automatic;
+  return { ...human };
+}
+
+
+const $ = id => document.getElementById(id);
+const game = new Game();
+const renderer = new Renderer($('game'));
+const input = { left: false, right: false, fire: false };
+const agentInput = { left: false, right: false, fire: false };
+const wingmanAgent = { left: false, right: false, fire: false };
+let agentUntil = 0, wingmanUntil = 0, mode = 'human';
+let best = 0, last = 0, noticeUntil = 0, muted = true, audio;
+try { best = Number(localStorage.getItem('space-best')) || 0; } catch { /* Private modes may deny storage. */ }
+const scoreText = value => String(value).padStart(6, '0');
+function sound(type) {
+  if (muted) return;
+  try {
+    audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume().catch(() => {});
+    const osc = audio.createOscillator(), gain = audio.createGain(), now = audio.currentTime;
+    const notes = { fire: [700, 180, .06], hit: [160, 50, .12], damage: [100, 30, .25], power: [400, 950, .2], wave: [250, 700, .25], over: [180, 40, .6] };
+    const [from, to, duration] = notes[type] || notes.hit;
+    osc.type = type === 'fire' ? 'triangle' : 'sine'; osc.frequency.setValueAtTime(from, now); osc.frequency.exponentialRampToValueAtTime(to, now + duration);
+    gain.gain.setValueAtTime(.045, now); gain.gain.exponentialRampToValueAtTime(.001, now + duration);
+    osc.connect(gain); gain.connect(audio.destination); osc.start(now); osc.stop(now + duration);
+  } catch { /* Audio is optional; gameplay works without Web Audio. */ }
+}
+function clearInput() { for (const key of Object.keys(input)) { input[key] = false; agentInput[key] = false; wingmanAgent[key] = false; } agentUntil = 0; wingmanUntil = 0; }
+function setMode(value) {
+  if (!['human', 'ai', 'coop'].includes(value)) throw new TypeError('Mode must be human, ai or coop');
+  const teamChanged = (mode === 'coop') !== (value === 'coop');
+  mode = value; game.coop = value === 'coop'; $('mode').value = value; clearInput();
+  if (teamChanged) {
+    const wasReady = game.state === 'ready'; game.reset();
+    if (wasReady) { game.state = 'ready'; game.events = []; }
+    else { $('overlay').hidden = true; }
+  }
+  if (game.state === 'playing') $('game').focus({ preventScroll: true });
+  $('pilot-help').textContent = { human: 'You move. You fire.', ai: 'AI moves, aims and fires. Enjoy the show.', coop: 'Two ships. You fly green. AI flies violet. Shared score.' }[mode];
+}
+$('mode').addEventListener('change', e => setMode(e.target.value));
+function showOverlay(eyebrow, title, description, button) {
+  $('overlay').hidden = false; $('eyebrow').textContent = eyebrow; $('title').innerHTML = title;
+  $('description').textContent = description; $('play').innerHTML = button + ' <span>↗</span>';
+}
+function sync() {
+  $('score').textContent = scoreText(game.score); $('best').textContent = scoreText(best);
+  $('wave').textContent = String(game.wave).padStart(2, '0');
+  $('lives').textContent = Array.from({ length: 3 }, (_, i) => i < game.lives ? '◆' : '◇').join(' ');
+  $('lives').setAttribute('aria-label', `${game.lives} lives`);
+  $('wingman-hud').hidden = !game.wingman;
+  $('wingman-lives').textContent = Array.from({ length: 3 }, (_, i) => i < (game.wingman?.lives || 0) ? '◆' : '◇').join(' ');
+  $('wingman-lives').setAttribute('aria-label', `${game.wingman?.lives || 0} AI lives`);
+  $('weapon').textContent = game.power > 0 ? `TRIPLE LASER · ${Math.ceil(game.power)}s` : 'STANDARD LASER';
+  $('pause').disabled = !['playing', 'paused'].includes(game.state);
+  $('pause').textContent = game.state === 'paused' ? '▶' : 'Ⅱ';
+  $('pause').setAttribute('aria-label', game.state === 'paused' ? 'Resume game' : 'Pause game');
+}
+function pause() {
+  game.togglePause(); clearInput();
+  if (game.state === 'paused') showOverlay('MISSION ON HOLD', 'TAKE A<br>BREATHER<span>.</span>', 'Your sector can wait. Ready when you are.', 'Resume mission');
+  else if (game.state === 'playing') { $('overlay').hidden = true; $('game').focus({ preventScroll: true }); }
+  sync();
+}
+$('play').addEventListener('click', () => {
+  clearInput();
+  if (game.state === 'paused') game.togglePause(); else game.reset();
+  $('overlay').hidden = true; $('game').focus({ preventScroll: true }); sync();
+});
+$('pause').addEventListener('click', pause);
+$('sound').addEventListener('click', () => {
+  muted = !muted; $('sound').textContent = muted ? 'Sound off' : 'Sound on'; $('sound').setAttribute('aria-pressed', String(!muted));
+  if (!muted) sound('power');
+  if (game.state === 'playing') $('game').focus({ preventScroll: true });
+});
+const keys = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ' ': 'fire' };
+window.addEventListener('keydown', e => {
+  if (keys[e.key] && game.state === 'playing' && e.target.tagName !== 'BUTTON') { e.preventDefault(); input[keys[e.key]] = true; }
+  if ((e.key.toLowerCase() === 'p' || e.key === 'Escape') && !e.repeat) pause();
+});
+window.addEventListener('keyup', e => { if (keys[e.key]) input[keys[e.key]] = false; });
+window.addEventListener('blur', () => { clearInput(); if (game.state === 'playing') pause(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && game.state === 'playing') pause(); });
+for (const button of document.querySelectorAll('[data-action]')) {
+  button.addEventListener('pointerdown', e => {
+    e.preventDefault(); button.setPointerCapture(e.pointerId);
+    if (game.state === 'playing') input[button.dataset.action] = true;
+  });
+  for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => { input[button.dataset.action] = false; });
+}
+function frame(timestamp) {
+  const dt = last ? Math.min((timestamp - last) / 1000, .05) : 0; last = timestamp;
+  const human = { ...input };
+  if (timestamp < agentUntil) for (const key of Object.keys(human)) human[key] ||= agentInput[key];
+  const wingmanControls = timestamp < wingmanUntil ? wingmanAgent : pilotInput(game, game.wingman);
+  game.update(dt, combineInput(human, pilotInput(game), mode), wingmanControls);
+  for (const event of game.events.splice(0)) {
+    sound(event.type);
+    if (event.type === 'wave' || event.type === 'power') {
+      $('notice').textContent = event.type === 'wave' ? (event.wave % 5 === 0 ? 'WARNING / MOTHERSHIP' : `SECTOR ${String(event.wave).padStart(2, '0')} / ENGAGE`) : event.power === 'shield' ? 'HULL REPAIRED + SHIELD' : 'TRIPLE LASER ONLINE';
+      noticeUntil = timestamp + 2000;
+    }
+    if (event.type === 'over') {
+      clearInput(); noticeUntil = 0;
+      showOverlay('TRANSMISSION LOST', 'GOOD<br>FIGHT<span>.</span>', `Score ${scoreText(game.score)} · Sector ${game.wave}. Earth needs you again.`, 'Fly again');
+      $('play').focus({ preventScroll: true });
+    }
+  }
+  if (game.score > best) { best = game.score; try { localStorage.setItem('space-best', String(best)); } catch { /* Best remains available for this session. */ } }
+  if (timestamp > noticeUntil) $('notice').textContent = '';
+  sync(); renderer.render(game, timestamp / 1000); requestAnimationFrame(frame);
+}
+sync(); requestAnimationFrame(frame);
+
+/** Browser-agent integration. Snapshots are copies; commands use normal gameplay. */
+window.spaceInvaders = Object.freeze({
+  version: 1,
+  getState: () => structuredClone({ state: game.state, mode, score: game.score, best, lives: game.lives, wave: game.wave, time: game.time, width: 960, height: 680, player: game.player, wingman: game.wingman, enemies: game.enemies, shots: game.shots, drops: game.drops, power: game.power, invincible: game.invincible }),
+  start: () => $('play').click(),
+  pause: () => { if (game.state === 'playing') pause(); },
+  resume: () => { if (game.state === 'paused') pause(); },
+  setMode,
+  setInput: (action = {}, durationMs = 200, ship = 'player') => {
+    if (!['player', 'wingman'].includes(ship)) throw new TypeError('Ship must be player or wingman');
+    const target = ship === 'wingman' ? wingmanAgent : agentInput;
+    for (const key of Object.keys(target)) target[key] = action[key] === true;
+    const until = performance.now() + Math.max(0, Math.min(1000, Number(durationMs) || 0));
+    if (ship === 'wingman') wingmanUntil = until; else agentUntil = until;
+  },
+  release: clearInput,
+});
+</script>
+</body>
+</html>
