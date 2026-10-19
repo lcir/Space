@@ -1,15 +1,19 @@
+import { FixedStepLoop } from './loop.js';
 import { Game } from './engine.js';
 import { Renderer } from './renderer.js';
-import { pilotInput, combineInput } from './pilot.js';
+import { pilotInput } from './pilot.js';
 
-const $ = id => document.getElementById(id);
+const elements = new Map();
+const $ = id => { if (!elements.has(id)) elements.set(id, document.getElementById(id)); return elements.get(id); };
+const loop = new FixedStepLoop();
 const game = new Game();
 const renderer = new Renderer($('game'));
 const input = { left: false, right: false, fire: false };
 const agentInput = { left: false, right: false, fire: false };
 const wingmanAgent = { left: false, right: false, fire: false };
 let agentUntil = 0, wingmanUntil = 0, mode = 'human';
-let best = 0, last = 0, noticeUntil = 0, muted = true, audio;
+let best = 0, noticeUntil = 0, muted = true, audio;
+let inputTimestamp = 0, nextHud = 0, nextSave = 0, bestDirty = false;
 try { best = Number(localStorage.getItem('space-best')) || 0; } catch { /* Private modes may deny storage. */ }
 const scoreText = value => String(value).padStart(6, '0');
 function sound(type) {
@@ -28,6 +32,7 @@ function sound(type) {
 function clearInput() { for (const key of Object.keys(input)) { input[key] = false; agentInput[key] = false; wingmanAgent[key] = false; } agentUntil = 0; wingmanUntil = 0; }
 function setMode(value) {
   if (!['human', 'ai', 'coop'].includes(value)) throw new TypeError('Mode must be human, ai or coop');
+  loop.reset();
   const teamChanged = (mode === 'coop') !== (value === 'coop');
   mode = value; game.coop = value === 'coop'; $('mode').value = value; clearInput();
   if (teamChanged) {
@@ -57,13 +62,13 @@ function sync() {
   $('pause').setAttribute('aria-label', game.state === 'paused' ? 'Resume game' : 'Pause game');
 }
 function pause() {
-  game.togglePause(); clearInput();
+  loop.reset(); game.togglePause(); clearInput();
   if (game.state === 'paused') showOverlay('MISSION ON HOLD', 'TAKE A<br>BREATHER<span>.</span>', 'Your sector can wait. Ready when you are.', 'Resume mission');
   else if (game.state === 'playing') { $('overlay').hidden = true; $('game').focus({ preventScroll: true }); }
   sync();
 }
 $('play').addEventListener('click', () => {
-  clearInput();
+  loop.reset(); clearInput();
   if (game.state === 'paused') game.togglePause(); else game.reset();
   $('overlay').hidden = true; $('game').focus({ preventScroll: true }); sync();
 });
@@ -88,12 +93,18 @@ for (const button of document.querySelectorAll('[data-action]')) {
   });
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) button.addEventListener(event, () => { input[button.dataset.action] = false; });
 }
-function frame(timestamp) {
-  const dt = last ? Math.min((timestamp - last) / 1000, .05) : 0; last = timestamp;
+function updateGame(dt) {
   const human = { ...input };
-  if (timestamp < agentUntil) for (const key of Object.keys(human)) human[key] ||= agentInput[key];
-  const wingmanControls = timestamp < wingmanUntil ? wingmanAgent : pilotInput(game, game.wingman);
-  game.update(dt, combineInput(human, pilotInput(game), mode), wingmanControls);
+  if (inputTimestamp < agentUntil) for (const key of Object.keys(human)) human[key] ||= agentInput[key];
+  const wingmanControls = game.wingman
+    ? (inputTimestamp < wingmanUntil ? wingmanAgent : pilotInput(game, game.wingman))
+    : undefined;
+  const controls = mode === 'ai' ? pilotInput(game) : human;
+  game.update(dt, controls, wingmanControls);
+}
+function frame(timestamp) {
+  inputTimestamp = timestamp;
+  loop.advance(timestamp, updateGame, game.state === 'playing');
   for (const event of game.events.splice(0)) {
     sound(event.type);
     if (event.type === 'wave' || event.type === 'power') {
@@ -106,9 +117,16 @@ function frame(timestamp) {
       $('play').focus({ preventScroll: true });
     }
   }
-  if (game.score > best) { best = game.score; try { localStorage.setItem('space-best', String(best)); } catch { /* Best remains available for this session. */ } }
-  if (timestamp > noticeUntil) $('notice').textContent = '';
-  sync(); renderer.render(game, timestamp / 1000); requestAnimationFrame(frame);
+  if (game.score > best) { best = game.score; bestDirty = true; }
+  if (bestDirty && (timestamp >= nextSave || game.state === 'over')) {
+    try { localStorage.setItem('space-best', String(best)); } catch { /* Session score remains available. */ }
+    bestDirty = false; nextSave = timestamp + 750;
+  }
+  if (noticeUntil && timestamp > noticeUntil) { $('notice').textContent = ''; noticeUntil = 0; }
+  // HUD need only change at 10 Hz; gameplay/rendering stay at display refresh.
+  if (timestamp >= nextHud) { sync(); nextHud = timestamp + 100; }
+  renderer.render(game, timestamp / 1000);
+  requestAnimationFrame(frame);
 }
 sync(); requestAnimationFrame(frame);
 

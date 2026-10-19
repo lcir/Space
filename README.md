@@ -83,3 +83,11 @@ spaceInvaders.setInput({ left: true, fire: true }, 250, 'wingman');
 `setInput(action, durationMs = 200, ship = 'player')` replaces that agent's previous held inputs, expires after at most 1000 ms, and accepts `player` or `wingman`. The wingman follows agent commands while they are fresh and returns to its local AI when they expire. Player commands combine with keyboard inputs in human/co-op modes; solo autopilot controls the primary ship in AI mode. `release()` clears held keyboard and agent inputs. `start()` launches or restarts, and resumes if paused. The API does not expose mutations, invulnerability commands, or score overrides. Losing focus pauses gameplay, including agent gameplay.
 
 Optional real-browser regression: install Python Playwright and Chromium, run `npm run build`, then `python test/browser-smoke.py`. It covers keyboard input, pause, co-op, agent control, audio UI, mobile layout and the portable build. The Python dependency is only for this optional test, not for playing or building.
+
+## Performance and timing
+
+The simulation advances at a fixed 120 Hz, independently of display refresh. A frame can catch up at most 250 ms (30 bounded steps); pausing clears time debt. At 15, 30, 60 and 144 rendering FPS, the same one-second input sequence produces identical simulation state. This fixes slow motion caused by discarding time from frames longer than 50 ms.
+
+Glow-heavy alien, mothership and laser sprites, plus the static planet/background, are baked into offscreen canvases once. The visible canvas has a 1.5-million-pixel budget and a DPR cap of 1.5. ResizeObserver updates its dimensions outside the render loop. The HUD updates at 10 Hz, high-score writes are batched, and human mode does not calculate unused AI steering.
+
+An initial 4.5-second headless Chromium comparison at a 1440×1100 viewport and device scale 2 measured a render-call median of 1.6 ms before and 0.3 ms after, and p95 of 2.3 ms before and 0.8 ms after. These are local measurements, not a guarantee for other hardware. The browser smoke test also passes after these changes. Reproduce a sample with `python test/performance.py .`; run the command again with the path to another checkout to compare revisions under the same browser conditions.
