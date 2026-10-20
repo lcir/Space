@@ -46,7 +46,7 @@ Each change is measured alone against the previous accepted state, on the same 2
 | --- | --- | --- | --- | --- | --- | --- |
 | 0 | baseline | drop values | 64.86 | 1.53 | 97.26 | — |
 | 0 | baseline | rules | 72.20 | 0.76 | 136.19 | — |
-| 2a | exact (continuous) collision prediction instead of 3 samples | drop values / rules | 64.22 / 72.43 | 1.57 / 0.75 | — | not adopted: no measurable effect |
+| 2a | exact (continuous) collision prediction instead of 3 samples | drop values / rules | 64.22 / 72.43 | 1.57 / 0.75 | — | not adopted then: no measurable effect (adopted later, see 8) |
 | 2b | steering deadband 10 px → half a 120 Hz step (2.2 px) | drop values | **76.04** | **0.35** | — | **adopted** |
 | 2b | | rules | 68.73 | **0.20** | 132.75 | |
 
@@ -71,6 +71,15 @@ Skipping + at full lives gains about 6.5 levels in 600 s. A short detour limit r
 | 5 | just-in-time pickup: keep shooting until flying under the drop leaves `pickupSlack` seconds; .6 / .3 / .1 / .05 / **0** | 78.44 / 81.20 / 82.99 / 83.25 / **83.79**; fresh seeds: .1 → 82.71, **0 → 83.33** | 0.30–0.32 | .1 → 149.80 (1796 s) | 71 / 106 | **adopted: 0** |
 
 Collecting at the last moment keeps the user's rule (a + whenever it is safe) and is faster than skipping + at full lives (4). It takes more hits than waiting under the drop (0.31 vs 0.22 per minute): the waiting position has been checked for the whole fall, while the position under an enemy has not.
+
+| # | Change (on top of 5) | Level 600 s / fresh seeds | Hits per minute | Decision |
+| --- | --- | --- | --- | --- |
+| 5 | accepted state | 83.79 / 83.33 | 0.31 / 0.31 | — |
+| 6 | `escapeCheck: 1`: after catching a ϟ, some position must still be safe from the known shots (a + gives 3 s of invulnerability anyway) | 84.14 / 83.24 | 0.30 / 0.30 | not adopted: no measurable effect |
+| 7 | `columnLimit: 1 / 2 / 3`: skip a drop with that many enemies above it (each enemy fires equally often) | 80.42 / 80.53 / 81.10 | 0.27–0.29 | not adopted: fewer levels for slightly fewer hits |
+| 8 | exact collision prediction (2a again) | **83.97 / 83.83** | **0.18 / 0.17** | **adopted** |
+
+With the deadband fixed and drops collected at the last moment, the exact prediction now matters: the ship crosses shot columns much more often. At 1800 s the accepted rules reach level 150.69 in 1796 s with 0.11 hits per minute (baseline: 136.19 in 1532 s, 0.58 hits per minute).
 
 ### Running it
 

@@ -40,12 +40,21 @@ export function ruleTarget(game, ship, params) {
     const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) <= detour && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
     for (const drop of drops) {
       // With `pickupSlack`, keep shooting until flying under the drop leaves only that many seconds to spare.
+      // Every enemy fires equally often, so a drop under a full column is likelier to be hit by a shot not yet fired.
+      if (params.columnLimit > 0 && game.enemies.filter(e => Math.abs(e.x - drop.x) < (ship.w + 8) / 2 + params.safetyMargin).length >= params.columnLimit) continue;
       if (params.pickupSlack >= 0 && (ship.y - (ship.h + drop.h) / 2 - drop.y) / 110 - Math.abs(drop.x - ship.x) / SHIP_SPEED > params.pickupSlack) continue;
       const threats = shotThreats(game, ship, Math.max(params.dodgeHorizon, (ship.y - drop.y) / 110), params.safetyMargin);
-      if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity) return { targetX: drop.x, fire: Math.abs(drop.x - ship.x) < params.fireMargin, reason: type === 'shield' ? 'life' : 'triple' };
+      if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity && (!params.escapeCheck || canEscape(game, ship, drop, params))) return { targetX: drop.x, fire: Math.abs(drop.x - ship.x) < params.fireMargin, reason: type === 'shield' ? 'life' : 'triple' };
     }
   }
   return { ...policyTarget(game, ship, { ...params, rules: false, rapidValue: 0, shieldValue: 0 }), reason: 'enemy' };
+}
+const GRID = Array.from({ length: 113 }, (_, i) => 32 + i * 8);
+/** Whether, just after catching `drop`, some position can still be reached before the known shots arrive; a + makes the ship invulnerable for 3 seconds. */
+export function canEscape(game, ship, drop, params) {
+  const t = Math.max(0, (ship.y - (ship.h + drop.h) / 2 - drop.y) / 110), shots = game.shots.map(s => ({ ...s, x: s.x + s.vx * t, y: s.y + s.vy * t }));
+  const caught = { ...ship, x: drop.x, invincible: drop.type === 'shield' ? 3 : Math.max(0, ship.invincible - t) }, threats = shotThreats({ shots }, caught, params.dodgeHorizon, params.safetyMargin);
+  return GRID.some(x => firstCollision(caught, threats, x, caught.invincible) === Infinity);
 }
 /** Enemy shots that cross the ship's row within `horizon` seconds, with the times they enter, pass and leave it. */
 export function shotThreats(game, ship, horizon, margin) {
