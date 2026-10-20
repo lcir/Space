@@ -42,6 +42,6 @@ export async function runTraining(directory, { generations = Infinity, minutes =
     const entry = { generation: state.generation, type: 'benchmark', benchmark: final.benchmark, promoted: final.promoted, champion: final.state.champion.benchmark, params: state.parent.params, at: new Date().toISOString() };
     await record(paths, state, final.state, entry); state = final.state; promotions += final.promoted; onProgress({ run: state.generation - first, generations, ...entry });
   }
-  return { generation: state.generation, generations: state.generation - first, episodes: state.episodes, promotions, trainingReward: last?.trainingReward ?? null,
+  return { generation: state.generation, generations: state.generation - first, episodes: state.episodes, promotions, trainingLevel: last?.trainingLevel ?? null,
     championLevel: state.champion.benchmark, championSeconds: state.champion.seconds, championGeneration: state.champion.generation, baselineLevel: state.baseline, step: state.step };
 }

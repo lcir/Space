@@ -57,7 +57,7 @@ export async function createArena(options = {}) {
         if (path === '/api/config') {if(value.provider==='learned')room.trained=await readJSON(join(store.directory,'policy.json'),null);return json(response,200,room.configure(value));}
         if (path === '/api/train') {
           if (trainWorker) throw new RequestError('Training is already running',409);
-          const generations=value.generations ?? 10,population=value.population ?? 8,seconds=value.seconds ?? 120;
+          const generations=value.generations ?? 10,population=value.population ?? 8,seconds=value.seconds ?? 300;
           if (![generations,population,seconds].every(Number.isInteger) || generations<1 || generations>200 || population<2 || population>16 || seconds<5 || seconds>300) throw new RequestError('Training limits: 1..200 generations, 2..16 candidates, 5..300 seconds per episode');
           room.learning={status:'training',generation:0,generations};
           let resultReceived=false;

@@ -14,7 +14,7 @@ The small controller has parameters for target lead, target bias, how strongly i
 
 A new policy is never accepted on training reward alone. The parent is regularly checked on a fixed benchmark of 48 unseen games played until they are lost (at most 600 seconds; difficulty stops rising after sector 15, so a strong policy can survive indefinitely), measuring the **level** reached and the game length. Level is continuous: 6.5 means half of sector 7 is cleared. The parent becomes the **champion**, the policy the *Learned pilot* plays, only if it reaches a higher level than the current champion there. A checkpoint from an older benchmark is re-judged automatically. A parent that loses goes back to the champion and continues with a smaller mutation step. A run therefore can never replace a better saved policy with a worse one.
 
-Reward is kill points / 25, -10 for damage, -0.01 per shot, +0.03 per survival second, and a training-only +10 for clearing a sector. Live score remains ordinary game score.
+Training fitness is the mean level reached on the generation's games (300 seconds each by default), the same measure the benchmark uses. The per-ship reward shown in the arena (kill points / 25, -10 for damage, -0.01 per shot, +0.03 per survival second) is only reported, not optimized. Live score remains ordinary game score.
 
 ### Running it
 

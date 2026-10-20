@@ -811,7 +811,7 @@ if(session){
   $('agent-panel').hidden=false;$('arena-link').hidden=true;$('mode').value='coop';$('mode').disabled=true;
   $('pilot-help').textContent='Server arena · you fly green · agent flies violet';
   $('apply-agent').addEventListener('click',()=>session.request('/api/config',{provider:$('provider').value,model:$('model').value}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
-  $('train').addEventListener('click',()=>session.request('/api/train',{generations:10,population:8,seconds:120}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
+  $('train').addEventListener('click',()=>session.request('/api/train',{generations:10,population:8,seconds:300}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
   session.request('/api/models').then(data=>{if(!data.available){$('agent-status').textContent=data.error;return;}for(const name of data.models){const option=document.createElement('option');option.value=name;$('models').append(option);}}).catch(reportError);
 } else if(location.protocol==='file:') $('arena-link').hidden=true;
 </script>
