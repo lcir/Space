@@ -10,6 +10,11 @@ import { createArena } from '../server/app.mjs';
 import { ArenaClient } from '../agents/control.mjs';
 import { createTraining, trainGeneration } from '../agents/train.mjs';
 import { runTraining, loadTraining } from '../agents/training-store.mjs';
+import { Game } from '../src/engine.js';
+import { DEFAULT_POLICY, seededRandom } from '../agents/policy.mjs';
+import { DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from '../agents/llm.mjs';
+import { teacherRollouts } from '../agents/distill.mjs';
+import { playGame, controller } from '../agents/llm-bench.mjs';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function fixture(t,options={}) {
   const directory=await mkdtemp(join(tmpdir(),'arena-'));
@@ -91,12 +96,12 @@ test('persistent training continues across runs, warm-starts from a saved policy
   const state=JSON.parse(await readFile(join(directory,'training','state.json'),'utf8'));
   assert.equal(state.generation,3);
   const second=await runTraining(directory,{generations:2,...quick,...step});
-  assert.equal(second.generation,5);assert.equal(second.generations,2);assert.ok(second.championReward>=first.championReward);
+  assert.equal(second.generation,5);assert.equal(second.generations,2);assert.ok(second.championLevel>=first.championLevel);
   const history=(await readFile(join(directory,'training','history.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
   assert.deepEqual(history.map(entry=>entry.generation),[1,2,3,4,5]);
   const champions=history.filter(entry=>entry.benchmark!==null).map(entry=>entry.champion);
   assert.deepEqual(champions,[...champions].sort((a,b)=>a-b));
-  if(second.promotions+first.promotions){const policy=JSON.parse(await readFile(join(directory,'policy.json'),'utf8'));assert.equal(policy.kind,'evolved-controller-v2');assert.equal(policy.benchmarkReward,second.championReward);}
+  if(second.promotions+first.promotions){const policy=JSON.parse(await readFile(join(directory,'policy.json'),'utf8'));assert.equal(policy.kind,'evolved-controller-v2');assert.equal(policy.benchmarkLevel,second.championLevel);}
 });
 test('training runs in a worker while HTTP observation and simulation remain available',async t=>{
   const {app,client,directory}=await fixture(t);await client.start();
@@ -127,4 +132,16 @@ test('switching to solo AI releases human ownership and leaves browsers as spect
  assert.ok(app.room.leases.get('player'));await client.start('ai');await client.claim('player','Codex solo');
  socket.send(JSON.stringify({type:'join'}));await sleep(30);assert.ok(messages.some(m=>m.type==='spectator'));
  assert.equal(app.room.leases.get('player').name,'Codex solo');
+});
+test('distillation examples show the model exactly the live prompt and a valid teacher action',()=>{
+  const [example]=teacherRollouts(DEFAULT_POLICY,1,42),game=new Game(seededRandom(42));game.reset();
+  for(let tick=0;tick<60;tick++)game.update(1/120,{});
+  assert.equal(example.messages[0].content,chatMessages(gameObservation(game),DEFAULT_STRATEGY)[0].content);
+  const user=JSON.parse(example.messages[1].content),action=validCommand(JSON.parse(example.messages[2].content));
+  assert.equal(user.ship,'player');assert.equal(user.direction,1);assert.ok(user.enemies.length>0);assert.ok(action.targetX>=32&&action.targetX<=928);
+});
+test('LLM benchmark waits for every decision and replays the same game for the same seed',async()=>{
+  const reached=[],options={seconds:5,interval:.25,onDecision:game=>reached.push(game.time)};
+  const first=await playGame(5,controller('oracle'),options),second=await playGame(5,controller('oracle'),{seconds:5,interval:.25});
+  assert.equal(first.decisions,20);assert.equal(reached.length,20);assert.deepEqual({...first,latencyMs:0},{...second,latencyMs:0});
 });

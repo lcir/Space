@@ -1,4 +1,5 @@
 import { performance } from 'node:perf_hooks';
+import { ACTION_FORMAT, chatMessages, validCommand } from '../agents/llm.mjs';
 export class OllamaPilot {
   constructor({ baseURL, model, store, timeoutMs = 12000, reflectionTimeoutMs = 20000 }) {
     this.baseURL = new URL(baseURL); if (!['http:', 'https:'].includes(this.baseURL.protocol) || this.baseURL.username || this.baseURL.password) throw new Error('Invalid Ollama base URL');
@@ -22,17 +23,10 @@ export class OllamaPilot {
   maybeDecide(observation, apply) {
     const now = performance.now(); if (this.busy || now < this.nextAt) return;
     this.busy = true; this.status = 'thinking'; const generation = this.generation;
-    const ship=observation[observation.activeShip];
-    const targets=observation.enemies.slice().sort((a,b)=>(Math.abs(a.x-ship.x)-a.y*.5)-(Math.abs(b.x-ship.x)-b.y*.5)).slice(0,12);
-    const compact = { ship:observation.activeShip, x:Math.round(ship.x), y:ship.y, lives:ship.lives,
-      enemies:targets.map(e=>[Math.round(e.x),Math.round(e.y)]), enemyCount:observation.enemies.length,
-      incoming:observation.shots.filter(s=>!s.friendly).sort((a,b)=>Math.abs(a.x-ship.x)-Math.abs(b.x-ship.x)).slice(0,6).map(s=>[Math.round(s.x),Math.round(s.y),s.vx,s.vy]), wave:observation.wave };
-    this.chat([{ role: 'system', content: 'You fly a Space Invaders ship. Enemy entries are [x,y]; incoming shots are [x,y,vx,vy]. Choose targetX (32..928) near a bottom enemy, fire=true, dodge=true. Reply only short JSON. Avoid enemy fire. Strategy memory: ' + (this.memory?.strategy || '') },
-      { role: 'user', content: JSON.stringify(compact) }], { type: 'object', properties: { targetX: { type:'number', minimum:32, maximum:928 }, fire: { type:'boolean' }, dodge: { type:'boolean' } }, required:['targetX','fire'], additionalProperties:false }, this.timeoutMs)
+    this.chat(chatMessages(observation, this.memory?.strategy), ACTION_FORMAT, this.timeoutMs)
       .then(command => {
         if (generation !== this.generation) return;
-        if (!Number.isFinite(command.targetX) || command.targetX < 32 || command.targetX > 928 || typeof command.fire !== 'boolean') throw new Error('Ollama returned an invalid action');
-        apply({ targetX: command.targetX, fire: command.fire, dodge: command.dodge !== false }); this.status = 'active'; this.lastError = null;
+        apply(validCommand(command)); this.status = 'active'; this.lastError = null;
       }).catch(error => { if (generation === this.generation) { this.status = 'fallback'; this.lastError = error.name === 'TimeoutError' ? 'Ollama timed out; local reflex pilot is active' : error.message; } })
       .finally(() => { this.busy = false; this.latencyMs = Math.round(performance.now() - now); this.nextAt = performance.now() + (this.lastError ? 1500 : 200); });
   }

@@ -63,6 +63,7 @@ Open **Learning and recordings → Train local pilot**, wait for the reported ch
 There are two separate learning mechanisms:
 
 - **Ollama strategy memory:** after a match, reflection updates a short persisted strategy used in future prompts. This does not change the language model's weights.
+- **Ollama distillation:** `npm run distill` fine-tunes `qwen2.5:0.5b` (MLX, Apple Silicon) to aim and collect drops like the learned pilot. It imports the result as `space-pilot` only if it reaches a higher level than the previous champion on a seeded LLM benchmark (`npm run bench:llm`).
 - **Local policy optimization:** accelerated game episodes on fresh seeds optimize actual controller parameters against rewards. A new policy replaces the saved champion only by beating it on a fixed benchmark of unseen games. Training is checkpointed in `.data/training/` and runs in a worker while the live arena continues.
 
 Completed/restarted matches produce per-ship rewards, a summary and a downloadable JSONL trace of actions, game events and observations. Data is in ignored `.data/` (or the Docker volume). The last 100 completed matches are retained; large recordings mark omitted trace lines. Read [learning details and reward definitions](docs/LEARNING.md).

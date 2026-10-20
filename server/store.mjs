@@ -3,6 +3,7 @@ import { createWriteStream } from 'node:fs';
 import { randomUUID, createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { once } from 'node:events';
+import { DEFAULT_STRATEGY } from '../agents/llm.mjs';
 export async function readJSON(path, fallback) { try { return JSON.parse(await readFile(path, 'utf8')); } catch { return fallback; } }
 export async function atomicJSON(path, value) {
   const temp = path + '.' + randomUUID() + '.tmp';
@@ -12,7 +13,7 @@ export class Store {
   constructor(directory) { this.directory = directory; this.records = join(directory, 'matches'); }
   async init() { await mkdir(this.records, { recursive: true }); await mkdir(join(this.directory, 'memory'), { recursive: true }); }
   memoryPath(model) { return join(this.directory, 'memory', createHash('sha256').update(model).digest('hex').slice(0, 24) + '.json'); }
-  async memory(model) { return readJSON(this.memoryPath(model), { model, matches: 0, strategy: 'Aim at the bottom-most invaders. Keep clear of incoming shots.', recent: [] }); }
+  async memory(model) { return readJSON(this.memoryPath(model), { model, matches: 0, strategy: DEFAULT_STRATEGY, recent: [] }); }
   async list() {
     const names = (await readdir(this.records)).filter(name => name.endsWith('.summary.json')).sort().reverse();
     return Promise.all(names.slice(0, 100).map(name => readJSON(join(this.records, name), null))).then(a => a.filter(Boolean));

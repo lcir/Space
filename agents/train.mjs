@@ -1,8 +1,9 @@
 import { Game, clamp } from '../src/engine.js';
-import { DEFAULT_POLICY, seededRandom, policyInput, eventReward } from './policy.mjs';
-export const BOUNDS = Object.freeze({ lead: [0, 1, .25], dodgeWindow: [80, 400, 80], dodgeMargin: [25, 130, 25], targetBias: [-200, 200, 75], fireMargin: [35, 1000, 250] });
+import { DEFAULT_POLICY, seededRandom, policyInput, eventReward, levelProgress } from './policy.mjs';
+export const BOUNDS = Object.freeze({ lead: [0, 1, .25], dodgeWindow: [80, 400, 80], dodgeMargin: [25, 130, 25], targetBias: [-200, 200, 75], fireMargin: [35, 1000, 250], rapidValue: [0, 600, 150], shieldValue: [0, 600, 150] });
 // Benchmark seeds never overlap training seeds (1e6 + generation * 16 + i), so promotion is judged on unseen games.
-export const BENCHMARK = Object.freeze({ seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 300 });
+// Games run until they are lost; the champion is the policy that reaches the highest level.
+export const BENCHMARK = Object.freeze({ version: 2, seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 900 });
 export const sanitizePolicy = params => Object.fromEntries(Object.entries(BOUNDS).map(([key, [lo, hi]]) => [key, Number.isFinite(params?.[key]) ? clamp(params[key], lo, hi) : DEFAULT_POLICY[key]]));
 export function evaluatePolicy(params, seeds = [11, 29, 47], seconds = 45) {
   let total = 0;
@@ -17,19 +18,36 @@ export function evaluatePolicy(params, seeds = [11, 29, 47], seconds = 45) {
   }
   return total / seeds.length;
 }
+/** Mean level reached and game length over the benchmark games. */
+export function benchmarkPolicy(params, { seeds, seconds }) {
+  let level = 0, time = 0, score = 0;
+  for (const seed of seeds) {
+    const game = new Game(seededRandom(seed)); game.reset();
+    for (let tick = 0; tick < seconds * 120 && game.state === 'playing'; tick++) { game.update(1 / 120, policyInput(game, game.player, params)); game.events.length = 0; }
+    level += levelProgress(game); time += game.time; score += game.score;
+  }
+  return { level: level / seeds.length, seconds: time / seeds.length, score: score / seeds.length };
+}
 export function createTraining(params = DEFAULT_POLICY, { seed = 123, benchmark = BENCHMARK } = {}) {
-  params = sanitizePolicy(params); benchmark = { seeds: [...benchmark.seeds], seconds: benchmark.seconds };
-  const score = evaluatePolicy(params, benchmark.seeds, benchmark.seconds), now = new Date().toISOString();
-  return { kind: 'policy-training-v2', seed, generation: 0, step: 1, episodes: benchmark.seeds.length * 2, benchmark,
-    baseline: evaluatePolicy(DEFAULT_POLICY, benchmark.seeds, benchmark.seconds),
-    parent: { params, benchmark: score }, champion: { params, benchmark: score, generation: 0, promotedAt: now }, createdAt: now, updatedAt: now };
+  params = sanitizePolicy(params); benchmark = { version: benchmark.version ?? BENCHMARK.version, seeds: [...benchmark.seeds], seconds: benchmark.seconds };
+  const result = benchmarkPolicy(params, benchmark), baseline = benchmarkPolicy(DEFAULT_POLICY, benchmark), now = new Date().toISOString();
+  return { kind: 'policy-training-v2', seed, generation: 0, step: 1, episodes: benchmark.seeds.length * 2, benchmark, baseline: baseline.level, baselineSeconds: baseline.seconds,
+    parent: { params, benchmark: result.level }, champion: { params, benchmark: result.level, seconds: result.seconds, generation: 0, promotedAt: now }, createdAt: now, updatedAt: now };
+}
+/** Re-judge a checkpoint made with an older benchmark; new parameters start at their neutral defaults. */
+export function migrateTraining(state) {
+  if ((state.benchmark.version ?? 1) >= BENCHMARK.version) return state;
+  const benchmark = { version: BENCHMARK.version, seeds: [...BENCHMARK.seeds], seconds: BENCHMARK.seconds }, params = sanitizePolicy(state.champion.params);
+  const result = benchmarkPolicy(params, benchmark), baseline = benchmarkPolicy(DEFAULT_POLICY, benchmark);
+  return { ...state, benchmark, baseline: baseline.level, baselineSeconds: baseline.seconds, step: Math.max(state.step, .5), episodes: state.episodes + benchmark.seeds.length * 2,
+    parent: { params, benchmark: result.level }, champion: { ...state.champion, params, benchmark: result.level, seconds: result.seconds }, updatedAt: new Date().toISOString() };
 }
 /** Benchmark the parent once after it changes; it becomes champion only by beating the current one.
  * Training rewards on a few seeds are noisy, so a parent that loses the benchmark restarts from the champion with a smaller step. */
 export function gate(state) {
   if (state.parent.benchmark !== null) return { state, benchmark: null, promoted: false };
-  const benchmark = evaluatePolicy(state.parent.params, state.benchmark.seeds, state.benchmark.seconds), promoted = benchmark > state.champion.benchmark;
-  const champion = promoted ? { params: state.parent.params, benchmark, generation: state.generation, promotedAt: new Date().toISOString() } : state.champion;
+  const result = benchmarkPolicy(state.parent.params, state.benchmark), benchmark = result.level, promoted = benchmark > state.champion.benchmark;
+  const champion = promoted ? { params: state.parent.params, benchmark, seconds: result.seconds, generation: state.generation, promotedAt: new Date().toISOString() } : state.champion;
   return { benchmark, promoted, state: { ...state, episodes: state.episodes + state.benchmark.seeds.length, champion,
     parent: promoted ? { ...state.parent, benchmark } : { params: champion.params, benchmark: champion.benchmark }, step: promoted ? state.step : Math.max(.05, state.step * .7) } };
 }

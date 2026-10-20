@@ -1,20 +1,20 @@
 import { mkdir, appendFile, rename, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { atomicJSON, readJSON } from '../server/store.mjs';
-import { createTraining, trainGeneration, gate } from './train.mjs';
+import { createTraining, migrateTraining, trainGeneration, gate } from './train.mjs';
 const HISTORY_LIMIT = 8 * 1024 * 1024;
 export const trainingPaths = directory => ({ policy: join(directory, 'policy.json'), folder: join(directory, 'training'),
   state: join(directory, 'training', 'state.json'), history: join(directory, 'training', 'history.jsonl') });
 export async function loadTraining(directory, options = {}) {
   const paths = trainingPaths(directory), state = await readJSON(paths.state, null);
-  if (state?.kind === 'policy-training-v2') return state;
+  if (state?.kind === 'policy-training-v2') return migrateTraining(state);
   // Warm-start from a policy saved before resumable training existed.
   return createTraining((await readJSON(paths.policy, null))?.params, options);
 }
 export function policyFile(state) {
   const { champion } = state;
   return { kind: 'evolved-controller-v2', params: champion.params, generation: champion.generation, episodes: state.episodes,
-    benchmarkReward: champion.benchmark, baselineReward: state.baseline, benchmark: { games: state.benchmark.seeds.length, seconds: state.benchmark.seconds }, promotedAt: champion.promotedAt };
+    benchmarkLevel: champion.benchmark, benchmarkSeconds: champion.seconds, baselineLevel: state.baseline, benchmark: { games: state.benchmark.seeds.length, seconds: state.benchmark.seconds }, promotedAt: champion.promotedAt };
 }
 async function record(paths, previous, state, entry) {
   const saved = await readJSON(paths.state, null);
@@ -27,7 +27,9 @@ async function record(paths, previous, state, entry) {
 /** Continue the persisted training run; every generation is checkpointed, so stopping loses at most one. */
 export async function runTraining(directory, { generations = Infinity, minutes = Infinity, benchmarkEvery = 5, shouldStop = () => false, benchmark, ...options } = {}, onProgress = () => {}) {
   const paths = trainingPaths(directory); await mkdir(paths.folder, { recursive: true });
+  const saved = await readJSON(paths.state, null);
   let state = await loadTraining(directory, { benchmark }); const started = Date.now(), first = state.generation; let promotions = 0, last = null;
+  if (saved && saved.benchmark?.version !== state.benchmark.version) { await atomicJSON(paths.policy, policyFile(state)); await atomicJSON(paths.state, state); }
   for (let run = 1; run <= generations && Date.now() - started < minutes * 60000 && !shouldStop(); run++) {
     const { state: next, entry } = trainGeneration(state, { ...options, benchmark: (state.generation + 1) % benchmarkEvery === 0 || run === generations });
     await record(paths, state, next, entry); state = next; last = entry; promotions += entry.promoted;
@@ -41,5 +43,5 @@ export async function runTraining(directory, { generations = Infinity, minutes =
     await record(paths, state, final.state, entry); state = final.state; promotions += final.promoted; onProgress({ run: state.generation - first, generations, ...entry });
   }
   return { generation: state.generation, generations: state.generation - first, episodes: state.episodes, promotions, trainingReward: last?.trainingReward ?? null,
-    championReward: state.champion.benchmark, championGeneration: state.champion.generation, baselineReward: state.baseline, step: state.step };
+    championLevel: state.champion.benchmark, championSeconds: state.champion.seconds, championGeneration: state.champion.generation, baselineLevel: state.baseline, step: state.step };
 }

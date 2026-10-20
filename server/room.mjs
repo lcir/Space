@@ -80,14 +80,16 @@ export class Room {
     const ship = role === 'player' ? this.game.player : this.game.wingman;
     if (!ship || ship.lives <= 0) return {};
     const command = this.commands.get(role);
-    if (command && command.until > this.now()) return 'targetX' in command.command ? policyInput(this.game,ship,DEFAULT_POLICY,command.command) : command.command;
+    // Agent and model targets steer through the best known reflexes.
+    const reflex = this.trained?.params || DEFAULT_POLICY;
+    if (command && command.until > this.now()) return 'targetX' in command.command ? policyInput(this.game,ship,reflex,command.command) : command.command;
     const autonomous = role === this.role() && this.mode !== 'human';
     if (!autonomous) return {};
     if (this.provider === 'none') return {};
     if (this.provider === 'learned') return policyInput(this.game,ship,this.trained?.params || DEFAULT_POLICY);
     if (this.provider === 'ollama') {
       const builtin = this.commands.get('builtin');
-      if (builtin && builtin.until > this.now()) return policyInput(this.game,ship,DEFAULT_POLICY,builtin.command);
+      if (builtin && builtin.until > this.now()) return policyInput(this.game,ship,reflex,builtin.command);
     }
     return pilotInput(this.game,ship);
   }
@@ -136,7 +138,7 @@ export class Room {
   agentInfo() {
     const lease = this.leases.get(this.role());
     return {provider:this.provider,role:this.role(),controlSource:((this.commands.get(this.role())?.until || 0)>this.now())?'external':this.provider==='ollama'?((this.commands.get('builtin')?.until || 0)>this.now()?'ollama':'local-fallback'):this.provider,external:lease && lease.expires > this.now() ? {name:lease.name,connected:true,commandFresh:(this.commands.get(this.role())?.until || 0)>this.now()}:null,
-      ollama:this.ollama.info(),learned:this.trained ? {episodes:this.trained.episodes,generation:this.trained.generation ?? null,reward:this.trained.benchmarkReward ?? this.trained.trainingReward}:null,learning:this.learning,storageError:this.storageError || null};
+      ollama:this.ollama.info(),learned:this.trained ? {episodes:this.trained.episodes,generation:this.trained.generation ?? null,level:this.trained.benchmarkLevel ?? null}:null,learning:this.learning,storageError:this.storageError || null};
   }
   snapshot() {
     const g = this.game;

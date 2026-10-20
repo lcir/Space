@@ -9,6 +9,8 @@
     "build": "node scripts/build.mjs",
     "static": "node scripts/serve.mjs --dist",
     "train": "node agents/train-cli.mjs",
+    "bench:llm": "node agents/llm-bench.mjs",
+    "distill": "node agents/distill.mjs",
     "test:server": "node --test --test-concurrency=1 test/server.test.mjs",
     "agent": "node agents/cli.mjs",
     "check": "npm test && npm run test:server && npm run build"

@@ -9,7 +9,7 @@ try {
     population:count('population',2,32),seeds:count('seeds',1,16),seconds:count('seconds',5,300),benchmarkEvery:count('benchmark-every',1,1000)};
   let stopping=false;process.on('SIGINT',()=>{if(stopping)process.exit(130);stopping=true;console.log('\nStopping after this generation; press Ctrl+C again to quit now.');});
   const result=await runTraining(directory,{...options,shouldStop:()=>stopping},p=>console.log(p.type==='benchmark'
-    ?`Final benchmark ${p.benchmark.toFixed(1)} · champion ${p.champion.toFixed(1)}${p.promoted?' · NEW CHAMPION':''}`
-    :`Generation ${p.generation}: training ${p.trainingReward.toFixed(1)} · step ${p.step.toFixed(2)}${p.benchmark===null?'':` · benchmark ${p.benchmark.toFixed(1)}`} · champion ${p.champion.toFixed(1)}${p.promoted?' · NEW CHAMPION':''}`));
+    ?`Final benchmark level ${p.benchmark.toFixed(2)} · champion level ${p.champion.toFixed(2)}${p.promoted?' · NEW CHAMPION':''}`
+    :`Generation ${p.generation}: training ${p.trainingReward.toFixed(1)} · step ${p.step.toFixed(2)}${p.benchmark===null?'':` · benchmark level ${p.benchmark.toFixed(2)}`} · champion level ${p.champion.toFixed(2)}${p.promoted?' · NEW CHAMPION':''}`));
   console.log(JSON.stringify({...result,saved:trainingPaths(directory)},null,2));
 } catch (error) { console.error(error.message); process.exitCode=1; }
