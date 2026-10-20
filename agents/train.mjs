@@ -1,5 +1,9 @@
 import { Game, clamp } from '../src/engine.js';
 import { DEFAULT_POLICY, seededRandom, policyInput, eventReward } from './policy.mjs';
+export const BOUNDS = Object.freeze({ lead: [0, 1, .25], dodgeWindow: [80, 400, 80], dodgeMargin: [25, 130, 25], targetBias: [-200, 200, 75], fireMargin: [35, 1000, 250] });
+// Benchmark seeds never overlap training seeds (1e6 + generation * 16 + i), so promotion is judged on unseen games.
+export const BENCHMARK = Object.freeze({ seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 300 });
+export const sanitizePolicy = params => Object.fromEntries(Object.entries(BOUNDS).map(([key, [lo, hi]]) => [key, Number.isFinite(params?.[key]) ? clamp(params[key], lo, hi) : DEFAULT_POLICY[key]]));
 export function evaluatePolicy(params, seeds = [11, 29, 47], seconds = 45) {
   let total = 0;
   for (const seed of seeds) {
@@ -13,22 +17,39 @@ export function evaluatePolicy(params, seeds = [11, 29, 47], seconds = 45) {
   }
   return total / seeds.length;
 }
-export function trainPolicy({ generations = 5, population = 8, seeds = [11, 29, 47], seconds = 45, seed = 123 } = {}, onProgress = () => {}) {
-  const random = seededRandom(seed), baseline = evaluatePolicy(DEFAULT_POLICY, seeds, seconds);
-  let params = { ...DEFAULT_POLICY }, reward = baseline;
-  const bounds = { lead: [0, 1, .25], dodgeWindow: [80, 400, 80], dodgeMargin: [25, 130, 25], targetBias: [-200, 200, 75], fireMargin: [35, 1000, 250] };
-  for (let generation = 0; generation < generations; generation++) {
-    let best = { params, reward };
-    for (let candidate = 0; candidate < population; candidate++) {
-      const trial = {};
-      for (const [key, [lo, hi, scale]] of Object.entries(bounds)) trial[key] = clamp(params[key] + (random() + random() - 1) * scale, lo, hi);
-      const result = evaluatePolicy(trial, seeds, seconds);
-      if (result > best.reward) best = { params: trial, reward: result };
-    }
-    params = best.params; reward = best.reward; onProgress({ generation: generation + 1, generations, reward, baseline });
+export function createTraining(params = DEFAULT_POLICY, { seed = 123, benchmark = BENCHMARK } = {}) {
+  params = sanitizePolicy(params); benchmark = { seeds: [...benchmark.seeds], seconds: benchmark.seconds };
+  const score = evaluatePolicy(params, benchmark.seeds, benchmark.seconds), now = new Date().toISOString();
+  return { kind: 'policy-training-v2', seed, generation: 0, step: 1, episodes: benchmark.seeds.length * 2, benchmark,
+    baseline: evaluatePolicy(DEFAULT_POLICY, benchmark.seeds, benchmark.seconds),
+    parent: { params, benchmark: score }, champion: { params, benchmark: score, generation: 0, promotedAt: now }, createdAt: now, updatedAt: now };
+}
+/** Benchmark the parent once after it changes; it becomes champion only by beating the current one.
+ * Training rewards on a few seeds are noisy, so a parent that loses the benchmark restarts from the champion with a smaller step. */
+export function gate(state) {
+  if (state.parent.benchmark !== null) return { state, benchmark: null, promoted: false };
+  const benchmark = evaluatePolicy(state.parent.params, state.benchmark.seeds, state.benchmark.seconds), promoted = benchmark > state.champion.benchmark;
+  const champion = promoted ? { params: state.parent.params, benchmark, generation: state.generation, promotedAt: new Date().toISOString() } : state.champion;
+  return { benchmark, promoted, state: { ...state, episodes: state.episodes + state.benchmark.seeds.length, champion,
+    parent: promoted ? { ...state.parent, benchmark } : { params: champion.params, benchmark: champion.benchmark }, step: promoted ? state.step : Math.max(.05, state.step * .7) } };
+}
+/** One resumable (1 + population) evolution step on fresh seeds; the state is plain JSON. */
+export function trainGeneration(state, { population = 8, seeds = 4, seconds = 120, benchmark = false } = {}) {
+  const generation = state.generation + 1, random = seededRandom(state.seed * 1000003 + generation);
+  const trainingSeeds = Array.from({ length: seeds }, (_, i) => 1e6 + generation * 16 + i);
+  const parentReward = evaluatePolicy(state.parent.params, trainingSeeds, seconds);
+  let best = { params: state.parent.params, reward: parentReward };
+  for (let candidate = 0; candidate < population; candidate++) {
+    const trial = {};
+    for (const [key, [lo, hi, scale]] of Object.entries(BOUNDS)) trial[key] = clamp(state.parent.params[key] + (random() + random() - 1) * scale * state.step, lo, hi);
+    const reward = evaluatePolicy(trial, trainingSeeds, seconds);
+    if (reward > best.reward) best = { params: trial, reward };
   }
-  const heldOut = [101, 211, 307];
-  return { kind: 'evolved-controller-v1', params, baseline, trainingReward: reward,
-    validationReward: evaluatePolicy(params, heldOut, seconds), validationBaseline: evaluatePolicy(DEFAULT_POLICY, heldOut, seconds),
-    episodes: (1 + generations * population) * seeds.length + heldOut.length * 2, generations, seconds, createdAt: new Date().toISOString() };
+  const improved = best.params !== state.parent.params;
+  // Widen the search while it keeps finding improvements, narrow it as they become rare.
+  let next = { ...state, generation, step: clamp(state.step * (improved ? 1.1 : .93), .05, 2), episodes: state.episodes + (population + 1) * seeds,
+    parent: improved ? { params: best.params, benchmark: null } : state.parent, updatedAt: new Date().toISOString() };
+  const result = benchmark ? gate(next) : { state: next, benchmark: null, promoted: false }; next = result.state;
+  return { state: next, entry: { generation, parentReward, trainingReward: best.reward, improved, step: next.step, benchmark: result.benchmark, promoted: result.promoted,
+    champion: next.champion.benchmark, params: best.params, at: next.updatedAt } };
 }

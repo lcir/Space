@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { Worker } from 'node:worker_threads';
 import { WebSocketServer, WebSocket } from 'ws';
-import { Store, atomicJSON, readJSON } from './store.mjs';
+import { Store, readJSON } from './store.mjs';
 import { OllamaPilot } from './ollama.mjs';
 import { Room, RequestError } from './room.mjs';
 const root = fileURLToPath(new URL('../',import.meta.url));
@@ -57,18 +57,18 @@ export async function createArena(options = {}) {
         if (path === '/api/config') {if(value.provider==='learned')room.trained=await readJSON(join(store.directory,'policy.json'),null);return json(response,200,room.configure(value));}
         if (path === '/api/train') {
           if (trainWorker) throw new RequestError('Training is already running',409);
-          const generations=value.generations ?? 5,population=value.population ?? 8,seconds=value.seconds ?? 30;
-          if (![generations,population,seconds].every(Number.isInteger) || generations<1 || generations>20 || population<2 || population>12 || seconds<5 || seconds>60) throw new RequestError('Training limits: 1..20 generations, 2..12 candidates, 5..60 seconds per episode');
+          const generations=value.generations ?? 10,population=value.population ?? 8,seconds=value.seconds ?? 120;
+          if (![generations,population,seconds].every(Number.isInteger) || generations<1 || generations>200 || population<2 || population>16 || seconds<5 || seconds>300) throw new RequestError('Training limits: 1..200 generations, 2..16 candidates, 5..300 seconds per episode');
           room.learning={status:'training',generation:0,generations};
           let resultReceived=false;
-          trainWorker=new Worker(new URL('./train-worker.mjs',import.meta.url),{workerData:{generations,population,seconds}});
+          trainWorker=new Worker(new URL('./train-worker.mjs',import.meta.url),{workerData:{directory:store.directory,generations,population,seconds}});
           const activeWorker=trainWorker;
           trainWorker.on('message',async message => {
             if (message.type==='progress') room.learning={status:'training',...message};
             if (message.type==='result') {
               resultReceived=true;
-              try { await atomicJSON(join(store.directory,'policy.json'),message.result); room.trained=message.result; room.learning={status:'ready',result:message.result}; }
-              catch { room.learning={status:'error',error:'Unable to save trained policy'}; }
+              try { room.trained=await readJSON(join(store.directory,'policy.json'),room.trained); room.learning={status:'ready',result:message.result}; }
+              catch { room.learning={status:'error',error:'Unable to load trained policy'}; }
               finally {if(trainWorker===activeWorker)trainWorker=null;}
             }
             if (message.type==='error') room.learning={status:'error',error:message.error};

@@ -184,10 +184,10 @@ function syncArena() {
     if(!session.starting)$('mode').value=session.latest.mode;
     $('pilot-help').textContent={human:'Server arena · you fly green · no AI ship',ai:'Solo agent mission · spectator view',coop:'Server arena · you fly green · agent flies violet'}[session.latest.mode];
     const pilot=info.ollama;
-    $('agent-status').textContent=info.provider==='ollama'?`${pilot.model} · ${pilot.status}${pilot.latencyMs?' · '+pilot.latencyMs+' ms':''}${pilot.lastError?' · '+pilot.lastError:''} · control: ${info.controlSource}`:info.provider==='external'?`External agent: ${info.external?.name || 'waiting for a controller'}${info.external?.commandFresh?' · active':' · local fallback until new commands'}`:info.provider==='learned'?info.learned?`Learned policy · ${info.learned.episodes} training episodes`:'No learned policy yet — train a pilot first.':info.provider;
+    $('agent-status').textContent=info.provider==='ollama'?`${pilot.model} · ${pilot.status}${pilot.latencyMs?' · '+pilot.latencyMs+' ms':''}${pilot.lastError?' · '+pilot.lastError:''} · control: ${info.controlSource}`:info.provider==='external'?`External agent: ${info.external?.name || 'waiting for a controller'}${info.external?.commandFresh?' · active':' · local fallback until new commands'}`:info.provider==='learned'?info.learned?`Learned policy · generation ${info.learned.generation ?? 0} · ${info.learned.episodes} training episodes`:'No learned policy yet — train a pilot first.':info.provider;
     $('strategy').textContent=pilot.memory?.strategy || 'No strategy memory yet.';
     const learning=info.learning;
-    $('training-status').textContent=learning.status==='training'?`Training ${learning.generation || 0}/${learning.generations} · game continues independently`:learning.status==='ready'?`Training reward ${learning.result.trainingReward.toFixed(1)} · held-out reward ${learning.result.validationReward.toFixed(1)}`:learning.error || '';
+    $('training-status').textContent=learning.status==='training'?`Training ${learning.run || 0}/${learning.generations} (generation ${learning.generation || 0}) · game continues independently`:learning.status==='ready'?`Generation ${learning.result.generation} · champion ${learning.result.championReward.toFixed(1)} (default ${learning.result.baselineReward.toFixed(1)})${learning.result.promotions?' · new champion':''}`:learning.error || '';
     $('train').disabled=learning.status==='training';
   }
   if(session.latest?.lastSummary && $('last-match').dataset.id!==session.latest.lastSummary.id){
@@ -200,6 +200,6 @@ if(session){
   $('agent-panel').hidden=false;$('arena-link').hidden=true;$('mode').value='coop';$('mode').disabled=true;
   $('pilot-help').textContent='Server arena · you fly green · agent flies violet';
   $('apply-agent').addEventListener('click',()=>session.request('/api/config',{provider:$('provider').value,model:$('model').value}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
-  $('train').addEventListener('click',()=>session.request('/api/train',{generations:5,population:8,seconds:30}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
+  $('train').addEventListener('click',()=>session.request('/api/train',{generations:10,population:8,seconds:120}).then(()=>$('game').focus({preventScroll:true})).catch(reportError));
   session.request('/api/models').then(data=>{if(!data.available){$('agent-status').textContent=data.error;return;}for(const name of data.models){const option=document.createElement('option');option.value=name;$('models').append(option);}}).catch(reportError);
 } else if(location.protocol==='file:') $('arena-link').hidden=true;

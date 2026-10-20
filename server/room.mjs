@@ -136,7 +136,7 @@ export class Room {
   agentInfo() {
     const lease = this.leases.get(this.role());
     return {provider:this.provider,role:this.role(),controlSource:((this.commands.get(this.role())?.until || 0)>this.now())?'external':this.provider==='ollama'?((this.commands.get('builtin')?.until || 0)>this.now()?'ollama':'local-fallback'):this.provider,external:lease && lease.expires > this.now() ? {name:lease.name,connected:true,commandFresh:(this.commands.get(this.role())?.until || 0)>this.now()}:null,
-      ollama:this.ollama.info(),learned:this.trained ? {episodes:this.trained.episodes,reward:this.trained.trainingReward}:null,learning:this.learning,storageError:this.storageError || null};
+      ollama:this.ollama.info(),learned:this.trained ? {episodes:this.trained.episodes,generation:this.trained.generation ?? null,reward:this.trained.benchmarkReward ?? this.trained.trainingReward}:null,learning:this.learning,storageError:this.storageError || null};
   }
   snapshot() {
     const g = this.game;

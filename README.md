@@ -58,12 +58,12 @@ For slower, thoughtful Codex decisions, there is **paused solo stepping**: obser
 
 ## Learning and recordings
 
-Open **Learning and recordings → Train local pilot**, wait for the reported training/held-out rewards, then select **Learned pilot** and Apply. Or run `npm run train` from a terminal.
+Open **Learning and recordings → Train local pilot**, wait for the reported champion reward, then select **Learned pilot** and Apply. For long-term training, run `npm run train -- --minutes 60` (or `--forever`) from a terminal. Every run continues from the saved checkpoint.
 
 There are two separate learning mechanisms:
 
 - **Ollama strategy memory:** after a match, reflection updates a short persisted strategy used in future prompts. This does not change the language model's weights.
-- **Local policy optimization:** accelerated seeded game episodes optimize actual controller parameters against rewards. Separate held-out episodes report whether improvement generalizes. Training runs in a worker while the live arena continues.
+- **Local policy optimization:** accelerated game episodes on fresh seeds optimize actual controller parameters against rewards. A new policy replaces the saved champion only by beating it on a fixed benchmark of unseen games. Training is checkpointed in `.data/training/` and runs in a worker while the live arena continues.
 
 Completed/restarted matches produce per-ship rewards, a summary and a downloadable JSONL trace of actions, game events and observations. Data is in ignored `.data/` (or the Docker volume). The last 100 completed matches are retained; large recordings mark omitted trace lines. Read [learning details and reward definitions](docs/LEARNING.md).
 

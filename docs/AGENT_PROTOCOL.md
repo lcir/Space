@@ -60,7 +60,7 @@ The current interactive Codex session can use this client or the CLI through ter
 | `POST /api/config` | `{provider:"heuristic"\|"ollama"\|"learned"\|"external"\|"none",model?}` |
 | `GET /api/models` | Installed Ollama models and reachability |
 | `GET /api/agent` | Provider, fallback, strategy memory and training status |
-| `POST /api/train` | `{generations,population,seconds}`; starts a background worker |
+| `POST /api/train` | `{generations?,population?,seconds?}` (defaults 10/8/120); continues the saved training in a background worker |
 | `GET /api/matches` | Last 100 completed match summaries |
 | `GET /api/matches/:id/download` | JSONL recording |
 

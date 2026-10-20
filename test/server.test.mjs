@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:http';
@@ -8,7 +8,8 @@ import { once } from 'node:events';
 import { WebSocket } from 'ws';
 import { createArena } from '../server/app.mjs';
 import { ArenaClient } from '../agents/control.mjs';
-import { trainPolicy } from '../agents/train.mjs';
+import { createTraining, trainGeneration } from '../agents/train.mjs';
+import { runTraining, loadTraining } from '../agents/training-store.mjs';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function fixture(t,options={}) {
   const directory=await mkdtemp(join(tmpdir(),'arena-'));
@@ -41,7 +42,9 @@ test('WebSocket human and HTTP agent independently fly two ships',async t=>{
   socket.send(JSON.stringify({type:'input',token:joined.token,action:{left:true,fire:true},durationMs:100}));await client.act({right:true,fire:true},100);await sleep(120);
   assert.ok(app.room.game.player.x<340);assert.ok(app.room.game.wingman.x>620);
   assert.ok(messages.some(m=>m.type==='state'&&m.observation.ships.length===2));
-  socket.close();await once(socket,'close');assert.equal(app.room.leases.has('player'),false);
+  socket.close();await once(socket,'close');
+  for(let i=0;i<100&&app.room.leases.has('player');i++)await sleep(5);
+  assert.equal(app.room.leases.has('player'),false);
 });
 test('foreign origins and private files are rejected; snapshots expose no controller token',async t=>{
   const {base,client}=await fixture(t);await client.claim();
@@ -73,16 +76,34 @@ test('slow Ollama cannot block game ticks and cleanly enters fallback',async t=>
   // Avoid an intentionally slow model reflection in fixture shutdown.
   assert.equal(app.room.matchModels.size,0);
 });
-test('reward optimization retains an elite and reports held-out performance',()=>{
-  const result=trainPolicy({generations:2,population:3,seeds:[7],seconds:8});
-  assert.ok(result.trainingReward>=result.baseline);assert.equal(result.kind,'evolved-controller-v1');assert.ok(Number.isFinite(result.validationReward));assert.ok(result.episodes>5);
+const quick={benchmark:{seeds:[1,2],seconds:10}},step={population:3,seeds:1,seconds:8};
+test('training resumes from a JSON checkpoint exactly as an uninterrupted run',()=>{
+  const start=createTraining(undefined,quick),straight=trainGeneration(trainGeneration(start,step).state,{...step,benchmark:true}).state;
+  const resumed=trainGeneration(JSON.parse(JSON.stringify(trainGeneration(start,step).state)),{...step,benchmark:true}).state;
+  assert.deepEqual({...resumed,updatedAt:0,champion:{...resumed.champion,promotedAt:0}},{...straight,updatedAt:0,champion:{...straight.champion,promotedAt:0}});
+  assert.equal(straight.generation,2);assert.ok(straight.champion.benchmark>=start.champion.benchmark);
+});
+test('persistent training continues across runs, warm-starts from a saved policy and only promotes better champions',async t=>{
+  const directory=await mkdtemp(join(tmpdir(),'training-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+  await writeFile(join(directory,'policy.json'),JSON.stringify({kind:'evolved-controller-v1',params:{lead:.4,dodgeWindow:190,dodgeMargin:80,targetBias:20,fireMargin:850}}));
+  assert.equal((await loadTraining(directory,quick)).champion.params.lead,.4);
+  const first=await runTraining(directory,{generations:3,benchmarkEvery:1,...quick,...step});
+  const state=JSON.parse(await readFile(join(directory,'training','state.json'),'utf8'));
+  assert.equal(state.generation,3);
+  const second=await runTraining(directory,{generations:2,...quick,...step});
+  assert.equal(second.generation,5);assert.equal(second.generations,2);assert.ok(second.championReward>=first.championReward);
+  const history=(await readFile(join(directory,'training','history.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
+  assert.deepEqual(history.map(entry=>entry.generation),[1,2,3,4,5]);
+  const champions=history.filter(entry=>entry.benchmark!==null).map(entry=>entry.champion);
+  assert.deepEqual(champions,[...champions].sort((a,b)=>a-b));
+  if(second.promotions+first.promotions){const policy=JSON.parse(await readFile(join(directory,'policy.json'),'utf8'));assert.equal(policy.kind,'evolved-controller-v2');assert.equal(policy.benchmarkReward,second.championReward);}
 });
 test('training runs in a worker while HTTP observation and simulation remain available',async t=>{
   const {app,client,directory}=await fixture(t);await client.start();
   await client.request('/api/train',{generations:1,population:2,seconds:5});
-  for(let i=0;i<200&&app.room.learning.status==='training';i++){await client.observe();await sleep(10);}
-  assert.equal(app.room.learning.status,'ready');assert.ok(app.room.game.time>0);
-  const policy=JSON.parse(await readFile(join(directory,'policy.json'),'utf8'));assert.equal(policy.kind,'evolved-controller-v1');
+  for(let i=0;i<1000&&app.room.learning.status==='training';i++){await client.observe();await sleep(10);}
+  assert.equal(app.room.learning.status,'ready');assert.ok(app.room.game.time>0);assert.equal(app.room.learning.result.generation,1);
+  const state=JSON.parse(await readFile(join(directory,'training','state.json'),'utf8'));assert.equal(state.generation,1);
 });
 test('Codex can step a paused solo episode without wall-clock timing or affecting co-op',async t=>{
  const {client}=await fixture(t);await client.start('ai');await client.claim('player','Codex step test');
