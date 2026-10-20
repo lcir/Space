@@ -146,8 +146,8 @@ test('LLM benchmark waits for every decision and replays the same game for the s
   assert.equal(first.decisions,20);assert.equal(reached.length,20);assert.deepEqual({...first,latencyMs:0},{...second,latencyMs:0});
 });
 test('safe dodging plays the same games as when the collision prediction was shared',()=>{
-  // Recorded after the deadband shrank to half a step; any other change to dodging shows up here.
-  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:7.4259259259259265,seconds:59.999999999997236,score:15325});
+  // Recorded after the exact collision prediction; any other change to dodging shows up here.
+  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:7.3240740740740735,seconds:54.027777777775356,score:15133.333333333334});
   const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[{x:s.x,y:s.y-200,vx:0,vy:300,w:8,h:18,friendly:false}];
   const threats=shotThreats(g,s,2,4);assert.ok(Number.isFinite(firstCollision(s,threats,s.x)));assert.equal(firstCollision(s,threats,s.x,1),Infinity);
 });
@@ -177,4 +177,8 @@ test('drop priority rules take a safe + first, then a missing triple laser, then
 test('the ship moves to a nearby safe position instead of waiting inside its deadband',()=>{
   const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;s.x=471.3;g.shots=[{x:492,y:438,vx:0,vy:400,w:8,h:18,friendly:false}];
   assert.equal(safeX(g,s,480),464);assert.equal(policyInput(g,s,DEFAULT_POLICY,{targetX:480}).left,true);
+});
+test('collision prediction catches a ship crossing a slow shot between its sample times',()=>{
+  const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;s.x=586;g.shots=[{x:400,y:508.5,vx:0,vy:205,w:8,h:18,friendly:false}];
+  const threats=shotThreats(g,s,2,4);assert.ok(Number.isFinite(firstCollision(s,threats,250)));assert.equal(firstCollision(s,threats,700),Infinity);
 });

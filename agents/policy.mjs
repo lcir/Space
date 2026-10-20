@@ -53,16 +53,20 @@ export function shotThreats(game, ship, horizon, margin) {
   for (const shot of game.shots) {
     if (shot.friendly || shot.vy <= 0) continue;
     const band = (ship.h + shot.h) / 2, enter = Math.max(0, (ship.y - band - shot.y) / shot.vy), leave = (ship.y + band - shot.y) / shot.vy;
-    if (leave > 0 && enter < horizon) threats.push({ shot, times: [enter, (enter + leave) / 2, leave], reach: (ship.w + shot.w) / 2 + margin });
+    if (leave > 0 && enter < horizon) threats.push({ shot, enter, leave, reach: (ship.w + shot.w) / 2 + margin });
   }
   return threats;
 }
 /** Seconds until the first hit no earlier than `after` if the ship flies to `x` at full speed and stays there; Infinity if none. */
 export function firstCollision(ship, threats, x, after = 0) {
+  const stop = Math.abs(x - ship.x) / SHIP_SPEED, v = Math.sign(x - ship.x) * SHIP_SPEED;
   let first = Infinity;
-  for (const { shot, times, reach } of threats) for (const t of times) {
-    if (t < after) continue;
-    if (Math.abs(shot.x + shot.vx * t - (ship.x + Math.sign(x - ship.x) * Math.min(SHIP_SPEED * t, Math.abs(x - ship.x)))) < reach) { first = Math.min(first, t); break; }
+  // The horizontal gap is linear while the ship flies and again after it stops, so the exact first time it is within reach is solvable.
+  for (const { shot, enter, leave, reach } of threats) for (const [a, b, gap, rate] of [[0, stop, shot.x - ship.x, shot.vx - v], [stop, Infinity, shot.x - x, shot.vx]]) {
+    const from = Math.max(a, enter, after), to = Math.min(b, leave, first);
+    if (from > to) continue;
+    const g = gap + rate * from, t = Math.abs(g) < reach ? from : g * rate < 0 ? from + (Math.abs(g) - reach) / Math.abs(rate) : Infinity;
+    if (t <= to) first = t;
   }
   return first;
 }
