@@ -3,7 +3,7 @@ import { clamp, invasionSpeed } from '../src/engine.js';
 export const DEFAULT_POLICY = Object.freeze({ lead: .25, safetyMargin: 4, dodgeHorizon: 1.2, targetBias: 0, fireMargin: 1000, rapidValue: 0, shieldValue: 0, stickiness: 0 });
 const SHIP_SPEED = 520;
 /** The drop rules accepted so far by `npm run sim:rules` experiments (docs/LEARNING.md). */
-export const RULES = Object.freeze({ rules: true, tripleRefresh: 5 });
+export const RULES = Object.freeze({ rules: true, tripleRefresh: 5, pickupSlack: 0 });
 const aimed = new WeakMap();
 /** Continuous level: 0 at the start, 1 when sector 1 is cleared, 6.5 halfway through sector 7. */
 export function levelProgress(game) {
@@ -39,6 +39,8 @@ export function ruleTarget(game, ship, params) {
   for (const [type, detour] of [['shield', ship.lives < 3 ? Infinity : params.shieldAtFull ?? Infinity], ['rapid', ship.power <= (params.tripleRefresh || 0) ? Infinity : -1]]) {
     const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) <= detour && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
     for (const drop of drops) {
+      // With `pickupSlack`, keep shooting until flying under the drop leaves only that many seconds to spare.
+      if (params.pickupSlack >= 0 && (ship.y - (ship.h + drop.h) / 2 - drop.y) / 110 - Math.abs(drop.x - ship.x) / SHIP_SPEED > params.pickupSlack) continue;
       const threats = shotThreats(game, ship, Math.max(params.dodgeHorizon, (ship.y - drop.y) / 110), params.safetyMargin);
       if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity) return { targetX: drop.x, fire: Math.abs(drop.x - ship.x) < params.fireMargin, reason: type === 'shield' ? 'life' : 'triple' };
     }

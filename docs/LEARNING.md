@@ -66,6 +66,12 @@ Always taking a ϟ (8) collects twice as many but loses levels to the detours. T
 
 Skipping + at full lives gains about 6.5 levels in 600 s. A short detour limit recovers little of that, so the cost is not the distance flown but the time spent waiting under a falling drop (up to about 2.5 s) instead of aiming at enemies. It costs about 45% more hits, and over 1800 s some games are lost. It still beats the drop-values pilot on both measures (75.86 levels, 0.34 hits per minute on the fresh seeds).
 
+| # | Change (rules pilot, with 3, + at full lives) | Level 600 s / fresh seeds | Hits per minute | Level 1800 s (game length) | + / ϟ per game | Decision |
+| --- | --- | --- | --- | --- | --- | --- |
+| 5 | just-in-time pickup: keep shooting until flying under the drop leaves `pickupSlack` seconds; .6 / .3 / .1 / .05 / **0** | 78.44 / 81.20 / 82.99 / 83.25 / **83.79**; fresh seeds: .1 → 82.71, **0 → 83.33** | 0.30–0.32 | .1 → 149.80 (1796 s) | 71 / 106 | **adopted: 0** |
+
+Collecting at the last moment keeps the user's rule (a + whenever it is safe) and is faster than skipping + at full lives (4). It takes more hits than waiting under the drop (0.31 vs 0.22 per minute): the waiting position has been checked for the whole fall, while the position under an enemy has not.
+
 ### Running it
 
 ```sh
