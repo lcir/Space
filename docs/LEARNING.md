@@ -81,6 +81,13 @@ Collecting at the last moment keeps the user's rule (a + whenever it is safe) an
 
 With the deadband fixed and drops collected at the last moment, the exact prediction now matters: the ship crosses shot columns much more often. At 1800 s the accepted rules reach level 150.69 in 1796 s with 0.11 hits per minute (baseline: 136.19 in 1532 s, 0.58 hits per minute).
 
+**Retraining with the rules (benchmark version 4).** Re-judged on the new benchmark, the old champion reaches level 83.37 (default parameters: 82.71). Sixty minutes of training (667 generations, 13 promotions) raised the benchmark to 102.66. The safety margin fell from 4 to 0.2 px and the dodge look-ahead from 1.26 to 0.35 s: with exact prediction, the pilot dodges late and tightly and spends the time aiming. On 200 games no training or benchmark had seen (seeds 970001+), both flown with the rules:
+
+| Parameters | Level 600 s | Level 1800 s | + / ϟ per game (1800 s) | Hits per minute (600 s / 1800 s) |
+| --- | --- | --- | --- | --- |
+| before retraining | 83.98 | 151.27 | 126 / 192 | 0.19 / 0.11 |
+| retrained | **101.65** | **210.19** | 183 / 267 | 0.13 / 0.12 |
+
 ### Running it
 
 ```sh
