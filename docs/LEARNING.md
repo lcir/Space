@@ -88,6 +88,8 @@ With the deadband fixed and drops collected at the last moment, the exact predic
 | before retraining | 83.98 | 151.27 | 126 / 192 | 0.19 / 0.11 |
 | retrained | **101.65** | **210.19** | 183 / 267 | 0.13 / 0.12 |
 
+The 1800 s column was measured with the champion of generation 1069 (benchmark 102.42); the final champion (generation 1215) was checked at 600 s only.
+
 ### Running it
 
 ```sh
