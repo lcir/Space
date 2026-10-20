@@ -16,6 +16,19 @@ A new policy is never accepted on training reward alone. The parent is regularly
 
 Training fitness is the mean level reached on the generation's games (300 seconds each by default), the same measure the benchmark uses. The per-ship reward shown in the arena (kill points / 25, -10 for damage, -0.01 per shot, +0.03 per survival second) is only reported, not optimized. Live score remains ordinary game score.
 
+### Drop priority rules (experiment)
+
+`{...params, rules: true}` replaces the drop values with fixed priorities. Dodging stays first. A **+** is taken whenever it is safe, even with full lives, because it always gives 3 seconds of invulnerability. A **ϟ** is taken only when no triple laser is active and collecting it is safe. Otherwise the pilot shoots enemies. A drop is safe when flying under it and waiting until it is caught is hit by no shot already in the air. Hits that would land while the ship is invulnerable do not count. `npm run sim:rules` plays the saved champion with and without the rules on the same 200 unseen games (seeds 950001+):
+
+| Cap | Pilot | Level | Game length | + / ϟ per game | Hits per minute |
+| --- | --- | --- | --- | --- | --- |
+| 600 s | champion (drop values) | 64.86 | 478 s | 38.6 / 96.1 | 1.53 |
+| 600 s | champion + rules | **72.20** | 578 s | 63.4 / 71.8 | **0.76** |
+| 1800 s | champion (drop values) | 97.26 | 932 s | 58.3 / 145.4 | 1.25 |
+| 1800 s | champion + rules | **136.19** | 1532 s | 118.6 / 137.8 | **0.58** |
+
+With drop values, 86% of hits happen while the pilot is flying to a drop. The script also reports 0% for the rules, but that number is partly true by construction: the rules drop a target as soon as it becomes unsafe, so on the tick before a hit they are no longer aiming at a drop. The meaningful evidence is the halved hit rate and the longer games. The rules are not yet trained or used by the arena; `sanitizePolicy` strips the flag.
+
 ### Running it
 
 ```sh
