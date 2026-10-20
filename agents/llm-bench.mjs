@@ -10,7 +10,7 @@ import { ACTION_FORMAT, DEFAULT_STRATEGY, chatMessages, gameObservation, validCo
 import { readJSON } from '../server/store.mjs';
 /** The game waits for every model decision, so results measure play rather than inference latency.
  * Games run until they are lost (or the time cap); the main result is the level reached. */
-export const LLM_BENCHMARK = Object.freeze({ version: 2, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 600, interval: .25 });
+export const LLM_BENCHMARK = Object.freeze({ version: 3, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
 export function ollamaDecider(model, { baseURL = 'http://127.0.0.1:11434', strategy = DEFAULT_STRATEGY, timeoutMs = 60000 } = {}) {
   return async game => {
     const response = await fetch(new URL('/api/chat', baseURL), { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(timeoutMs),

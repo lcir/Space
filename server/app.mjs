@@ -61,7 +61,7 @@ export async function createArena(options = {}) {
           if (![generations,population,seconds].every(Number.isInteger) || generations<1 || generations>200 || population<2 || population>16 || seconds<5 || seconds>300) throw new RequestError('Training limits: 1..200 generations, 2..16 candidates, 5..300 seconds per episode');
           room.learning={status:'training',generation:0,generations};
           let resultReceived=false;
-          trainWorker=new Worker(new URL('./train-worker.mjs',import.meta.url),{workerData:{directory:store.directory,generations,population,seconds}});
+          trainWorker=new Worker(new URL('./train-worker.mjs',import.meta.url),{workerData:{directory:store.directory,generations,population,seconds,benchmark:options.trainingBenchmark}});
           const activeWorker=trainWorker;
           trainWorker.on('message',async message => {
             if (message.type==='progress') room.learning={status:'training',...message};

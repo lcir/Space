@@ -1,9 +1,11 @@
 import { Game, clamp } from '../src/engine.js';
 import { DEFAULT_POLICY, seededRandom, policyInput, eventReward, levelProgress } from './policy.mjs';
-export const BOUNDS = Object.freeze({ lead: [0, 1, .25], dodgeWindow: [80, 400, 80], dodgeMargin: [25, 130, 25], targetBias: [-200, 200, 75], fireMargin: [35, 1000, 250], rapidValue: [0, 600, 150], shieldValue: [0, 600, 150] });
+export const BOUNDS = Object.freeze({ lead: [0, 1, .25], safetyMargin: [0, 20, 4], dodgeHorizon: [.3, 2, .3], targetBias: [-200, 200, 75], fireMargin: [35, 1000, 250],
+  rapidValue: [0, 600, 150], shieldValue: [0, 600, 150], stickiness: [0, 200, 40] });
 // Benchmark seeds never overlap training seeds (1e6 + generation * 16 + i), so promotion is judged on unseen games.
-// Games run until they are lost; the champion is the policy that reaches the highest level.
-export const BENCHMARK = Object.freeze({ version: 2, seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 900 });
+// Games run until they are lost or the time cap; the champion is the policy that reaches the highest level.
+// Difficulty stops rising after sector 15, so a strong policy can survive indefinitely and the cap bounds the cost.
+export const BENCHMARK = Object.freeze({ version: 3, seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 600 });
 export const sanitizePolicy = params => Object.fromEntries(Object.entries(BOUNDS).map(([key, [lo, hi]]) => [key, Number.isFinite(params?.[key]) ? clamp(params[key], lo, hi) : DEFAULT_POLICY[key]]));
 export function evaluatePolicy(params, seeds = [11, 29, 47], seconds = 45) {
   let total = 0;

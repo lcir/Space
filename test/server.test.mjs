@@ -104,7 +104,7 @@ test('persistent training continues across runs, warm-starts from a saved policy
   if(second.promotions+first.promotions){const policy=JSON.parse(await readFile(join(directory,'policy.json'),'utf8'));assert.equal(policy.kind,'evolved-controller-v2');assert.equal(policy.benchmarkLevel,second.championLevel);}
 });
 test('training runs in a worker while HTTP observation and simulation remain available',async t=>{
-  const {app,client,directory}=await fixture(t);await client.start();
+  const {app,client,directory}=await fixture(t,{trainingBenchmark:{seeds:[1,2],seconds:10}});await client.start();
   await client.request('/api/train',{generations:1,population:2,seconds:5});
   for(let i=0;i<1000&&app.room.learning.status==='training';i++){await client.observe();await sleep(10);}
   assert.equal(app.room.learning.status,'ready');assert.ok(app.room.game.time>0);assert.equal(app.room.learning.result.generation,1);
