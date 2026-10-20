@@ -33,12 +33,11 @@ export function policyTarget(game, ship, params = DEFAULT_POLICY) {
   }
   return { targetX, fire: Math.abs(targetX - ship.x) < params.fireMargin };
 }
-/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life; `shieldAtFull: 0` skips it at full lives), then ϟ when at most `tripleRefresh` seconds of it are left, then enemies.
+/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life; at full lives only within `shieldAtFull` pixels), then ϟ when at most `tripleRefresh` seconds of it are left, then enemies.
  * A drop is safe when flying under it and waiting until it is caught is hit by no known shot; hits while invincible do not count. */
 export function ruleTarget(game, ship, params) {
-  for (const [type, wanted] of [['shield', ship.lives < 3 || params.shieldAtFull !== 0], ['rapid', ship.power <= (params.tripleRefresh || 0)]]) {
-    if (!wanted) continue;
-    const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
+  for (const [type, detour] of [['shield', ship.lives < 3 ? Infinity : params.shieldAtFull ?? Infinity], ['rapid', ship.power <= (params.tripleRefresh || 0) ? Infinity : -1]]) {
+    const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) <= detour && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
     for (const drop of drops) {
       const threats = shotThreats(game, ship, Math.max(params.dodgeHorizon, (ship.y - drop.y) / 110), params.safetyMargin);
       if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity) return { targetX: drop.x, fire: Math.abs(drop.x - ship.x) < params.fireMargin, reason: type === 'shield' ? 'life' : 'triple' };

@@ -162,7 +162,7 @@ test('drop priority rules take a safe + first, then a missing triple laser, then
   g=setup({drops:[drop(x+200,'shield')],shots:[{...unsafe,y:594-24-600}]});assert.equal(ruleTarget(g,g.player,R).reason,'enemy');
   g=setup({drops:[drop(x+300,'rapid')]});assert.equal(ruleTarget(g,g.player,{...R,fireMargin:35}).fire,false);
   g=setup({drops:[drop(x+200,'shield')]});assert.equal(ruleTarget(g,g.player,R).reason,'life');
-  assert.equal(ruleTarget(g,g.player,{...R,shieldAtFull:0}).reason,'enemy');g=setup({lives:2,drops:[drop(x+200,'shield')]});assert.equal(ruleTarget(g,g.player,{...R,shieldAtFull:0}).reason,'life');
+  assert.equal(ruleTarget(g,g.player,{...R,shieldAtFull:0}).reason,'enemy');assert.equal(ruleTarget(g,g.player,{...R,shieldAtFull:150}).reason,'enemy');assert.equal(ruleTarget(g,g.player,{...R,shieldAtFull:250}).reason,'life');g=setup({lives:2,drops:[drop(x+200,'shield')]});assert.equal(ruleTarget(g,g.player,{...R,shieldAtFull:0}).reason,'life');
   g=setup();const enemy=ruleTarget(g,g.player,R);assert.equal(enemy.reason,'enemy');assert.equal(enemy.targetX,policyTarget(setup(),setup().player,{...DEFAULT_POLICY,rapidValue:0,shieldValue:0}).targetX);
   g=setup({power:3,drops:[drop(x+100,'rapid')]});assert.equal(ruleTarget(g,g.player,R).reason,'enemy');
   g=setup({power:1.5,drops:[drop(x+100,'rapid')]});assert.equal(ruleTarget(g,g.player,{...R,tripleRefresh:2}).reason,'triple');assert.equal(ruleTarget(g,g.player,{...R,tripleRefresh:1}).reason,'enemy');

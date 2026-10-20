@@ -62,8 +62,9 @@ Always taking a ϟ (8) collects twice as many but loses levels to the detours. T
 | --- | --- | --- | --- | --- | --- | --- |
 | 4 | + also at full lives (the user's rule) | 73.47 / 73.95 | 0.22 / 0.23 | 140.08 (1800 s) | 64 | current default |
 | 4 | `shieldAtFull: 0`: + only when a life is missing | **80.14 / 80.44** | 0.32 / 0.34 | **146.37** (1787 s) | 20 | open: faster, but takes more hits |
+| 4 | `shieldAtFull: 60 / 120 / 200`: + at full lives only within that many pixels | 75.07 / 74.63 / 74.48 | 0.22–0.24 | — | 54 / 59 / 63 | not adopted |
 
-Skipping + at full lives saves the detours: about 6.5 levels in 600 s. It costs about 45% more hits, and over 1800 s some games are lost. It still beats the drop-values pilot on both measures (75.86 levels, 0.34 hits per minute on the fresh seeds).
+Skipping + at full lives gains about 6.5 levels in 600 s. A short detour limit recovers little of that, so the cost is not the distance flown but the time spent waiting under a falling drop (up to about 2.5 s) instead of aiming at enemies. It costs about 45% more hits, and over 1800 s some games are lost. It still beats the drop-values pilot on both measures (75.86 levels, 0.34 hits per minute on the fresh seeds).
 
 ### Running it
 
