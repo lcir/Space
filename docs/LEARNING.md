@@ -38,6 +38,20 @@ The simulation also records what was going on at the last tick when some positio
 
 With drop values, chasing drops is strongly over-represented among hits. With the rules, it is not. Every hit comes less than 0.1 s after a safe position still existed. The cause is the collision prediction: it checks a shot only when it enters, crosses the middle of and leaves the ship's row. A ship crossing a shot's column can pass between those samples, so the prediction calls a path safe that runs through the shot.
 
+### Experiment log
+
+Each change is measured alone against the previous accepted state, on the same 200 games (seeds 950001+).
+
+| # | Change | Pilot | Level (600 s cap) | Hits per minute | Level (1800 s cap) | Decision |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | baseline | drop values | 64.86 | 1.53 | 97.26 | — |
+| 0 | baseline | rules | 72.20 | 0.76 | 136.19 | — |
+| 2a | exact (continuous) collision prediction instead of 3 samples | drop values / rules | 64.22 / 72.43 | 1.57 / 0.75 | — | not adopted: no measurable effect |
+| 2b | steering deadband 10 px → half a 120 Hz step (2.2 px) | drop values | **76.04** | **0.35** | — | **adopted** |
+| 2b | | rules | 68.73 | **0.20** | 132.75 | |
+
+The sample-gap explanation above turned out to be wrong (2a). Tracing individual hits showed the real cause: the nearest safe position was 6–8 px away, inside the 10 px deadband of `policyInput`, so the ship never moved there. With 2b almost every game lasts until the cap (596 s of 600, 1784 s of 1800 with the rules), so level now mostly measures how fast sectors are cleared, not survival. The rules are still the safer pilot (0.20 vs 0.35 hits per minute), but they clear sectors more slowly. They collect fewer ϟ (67 vs 112 per game), because a ϟ is only taken when none is active, and they spend detours on + drops at full lives.
+
 ### Running it
 
 ```sh

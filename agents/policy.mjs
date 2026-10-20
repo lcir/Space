@@ -85,7 +85,8 @@ export function policyInput(game, ship, params = DEFAULT_POLICY, command = null)
   let targetX = clamp(auto ? auto.targetX : command.targetX, 32, 928);
   const fire = command ? command.fire !== false : auto.fire;
   if (command?.dodge !== false) targetX = safeX(game, ship, targetX, params);
-  return { left: targetX < ship.x - 10, right: targetX > ship.x + 10, fire };
+  // Half of one 120 Hz step: the tightest deadband that cannot oscillate, so a safe position a few pixels away is actually reached.
+  return { left: targetX < ship.x - SHIP_SPEED / 240, right: targetX > ship.x + SHIP_SPEED / 240, fire };
 }
 export function eventReward(event) {
   if (event.type === 'hit') return (event.points || 100) / 25;
