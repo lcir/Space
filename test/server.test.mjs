@@ -8,10 +8,10 @@ import { once } from 'node:events';
 import { WebSocket } from 'ws';
 import { createArena } from '../server/app.mjs';
 import { ArenaClient } from '../agents/control.mjs';
-import { createTraining, trainGeneration } from '../agents/train.mjs';
+import { createTraining, trainGeneration, benchmarkPolicy } from '../agents/train.mjs';
 import { runTraining, loadTraining } from '../agents/training-store.mjs';
 import { Game } from '../src/engine.js';
-import { DEFAULT_POLICY, seededRandom } from '../agents/policy.mjs';
+import { DEFAULT_POLICY, seededRandom, shotThreats, firstCollision } from '../agents/policy.mjs';
 import { DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from '../agents/llm.mjs';
 import { teacherRollouts } from '../agents/distill.mjs';
 import { playGame, controller } from '../agents/llm-bench.mjs';
@@ -144,4 +144,9 @@ test('LLM benchmark waits for every decision and replays the same game for the s
   const reached=[],options={seconds:5,interval:.25,onDecision:game=>reached.push(game.time)};
   const first=await playGame(5,controller('oracle'),options),second=await playGame(5,controller('oracle'),{seconds:5,interval:.25});
   assert.equal(first.decisions,20);assert.equal(reached.length,20);assert.deepEqual({...first,latencyMs:0},{...second,latencyMs:0});
+});
+test('safe dodging is unchanged by sharing the collision prediction',()=>{
+  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:5.60838779956427,seconds:57.69166666666404,score:11108.333333333334});
+  const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[{x:s.x,y:s.y-200,vx:0,vy:300,w:8,h:18,friendly:false}];
+  const threats=shotThreats(g,s,2,4);assert.ok(Number.isFinite(firstCollision(s,threats,s.x)));assert.equal(firstCollision(s,threats,s.x,1),Infinity);
 });

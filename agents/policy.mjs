@@ -30,25 +30,33 @@ export function policyTarget(game, ship, params = DEFAULT_POLICY) {
   }
   return { targetX, fire: Math.abs(targetX - ship.x) < params.fireMargin };
 }
+/** Enemy shots that cross the ship's row within `horizon` seconds, with the times they enter, pass and leave it. */
+export function shotThreats(game, ship, horizon, margin) {
+  const threats = [];
+  for (const shot of game.shots) {
+    if (shot.friendly || shot.vy <= 0) continue;
+    const band = (ship.h + shot.h) / 2, enter = Math.max(0, (ship.y - band - shot.y) / shot.vy), leave = (ship.y + band - shot.y) / shot.vy;
+    if (leave > 0 && enter < horizon) threats.push({ shot, times: [enter, (enter + leave) / 2, leave], reach: (ship.w + shot.w) / 2 + margin });
+  }
+  return threats;
+}
+/** Seconds until the first hit no earlier than `after` if the ship flies to `x` at full speed and stays there; Infinity if none. */
+export function firstCollision(ship, threats, x, after = 0) {
+  let first = Infinity;
+  for (const { shot, times, reach } of threats) for (const t of times) {
+    if (t < after) continue;
+    if (Math.abs(shot.x + shot.vx * t - (ship.x + Math.sign(x - ship.x) * Math.min(SHIP_SPEED * t, Math.abs(x - ship.x)))) < reach) { first = Math.min(first, t); break; }
+  }
+  return first;
+}
 /** The position nearest `desired` whose path is clear of every shot arriving within the horizon.
  * If no position is clear, the one whose first collision comes latest. */
 export function safeX(game, ship, desired, params = DEFAULT_POLICY) {
   desired = clamp(desired, 32, 928);
   if (ship.invincible > params.dodgeHorizon) return desired;
-  const threats = [];
-  for (const shot of game.shots) {
-    if (shot.friendly || shot.vy <= 0) continue;
-    const band = (ship.h + shot.h) / 2, enter = Math.max(0, (ship.y - band - shot.y) / shot.vy), leave = (ship.y + band - shot.y) / shot.vy;
-    if (leave > 0 && enter < params.dodgeHorizon) threats.push({ shot, times: [enter, (enter + leave) / 2, leave], reach: (ship.w + shot.w) / 2 + params.safetyMargin });
-  }
+  const threats = shotThreats(game, ship, params.dodgeHorizon, params.safetyMargin);
   if (!threats.length) return desired;
-  const collision = x => {
-    let first = Infinity;
-    for (const { shot, times, reach } of threats) for (const t of times) {
-      if (Math.abs(shot.x + shot.vx * t - (ship.x + Math.sign(x - ship.x) * Math.min(SHIP_SPEED * t, Math.abs(x - ship.x)))) < reach) { first = Math.min(first, t); break; }
-    }
-    return first;
-  };
+  const collision = x => firstCollision(ship, threats, x);
   if (collision(desired) === Infinity) return desired;
   let best = desired, score = -Infinity;
   for (let x = 32; x <= 928; x += 8) {
