@@ -11,7 +11,7 @@ import { ArenaClient } from '../agents/control.mjs';
 import { createTraining, trainGeneration, benchmarkPolicy } from '../agents/train.mjs';
 import { runTraining, loadTraining } from '../agents/training-store.mjs';
 import { Game } from '../src/engine.js';
-import { DEFAULT_POLICY, seededRandom, shotThreats, firstCollision, ruleTarget, policyTarget, policyInput, safeX } from '../agents/policy.mjs';
+import { DEFAULT_POLICY, RULES, seededRandom, shotThreats, firstCollision, ruleTarget, policyTarget, policyInput, safeX, levelProgress } from '../agents/policy.mjs';
 import { DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from '../agents/llm.mjs';
 import { teacherRollouts } from '../agents/distill.mjs';
 import { playGame, controller } from '../agents/llm-bench.mjs';
@@ -146,8 +146,8 @@ test('LLM benchmark waits for every decision and replays the same game for the s
   assert.equal(first.decisions,20);assert.equal(reached.length,20);assert.deepEqual({...first,latencyMs:0},{...second,latencyMs:0});
 });
 test('safe dodging plays the same games as when the collision prediction was shared',()=>{
-  // Recorded after the exact collision prediction; any other change to dodging shows up here.
-  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:7.3240740740740735,seconds:54.027777777775356,score:15133.333333333334});
+  // Recorded with exact dodging and the drop rules; any other change to how the pilot flies shows up here.
+  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:10.944444444444445,seconds:59.999999999997236,score:22083.333333333332});
   const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[{x:s.x,y:s.y-200,vx:0,vy:300,w:8,h:18,friendly:false}];
   const threats=shotThreats(g,s,2,4);assert.ok(Number.isFinite(firstCollision(s,threats,s.x)));assert.equal(firstCollision(s,threats,s.x,1),Infinity);
 });
@@ -186,4 +186,9 @@ test('the ship moves to a nearby safe position instead of waiting inside its dea
 test('collision prediction catches a ship crossing a slow shot between its sample times',()=>{
   const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;s.x=586;g.shots=[{x:400,y:508.5,vx:0,vy:205,w:8,h:18,friendly:false}];
   const threats=shotThreats(g,s,2,4);assert.ok(Number.isFinite(firstCollision(s,threats,250)));assert.equal(firstCollision(s,threats,700),Infinity);
+});
+test('training and benchmarks play the learned parameters with the accepted drop rules',()=>{
+  const g=new Game(seededRandom(7));g.reset();
+  for(let tick=0;tick<60*120&&g.state==='playing';tick++){g.update(1/120,policyInput(g,g.player,{...DEFAULT_POLICY,...RULES}));g.events.length=0;}
+  assert.equal(benchmarkPolicy(DEFAULT_POLICY,{seeds:[7],seconds:60}).level,levelProgress(g));
 });

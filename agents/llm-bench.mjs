@@ -5,12 +5,13 @@ import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { Game } from '../src/engine.js';
 import { pilotInput } from '../src/pilot.js';
-import { DEFAULT_POLICY, seededRandom, policyInput, policyTarget, levelProgress } from './policy.mjs';
+import { DEFAULT_POLICY, seededRandom, policyInput, policyTarget, levelProgress, withRules } from './policy.mjs';
 import { ACTION_FORMAT, DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from './llm.mjs';
 import { readJSON } from '../server/store.mjs';
 /** The game waits for every model decision, so results measure play rather than inference latency.
  * Games run until they are lost (or the time cap); the main result is the level reached. */
-export const LLM_BENCHMARK = Object.freeze({ version: 3, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
+// Version 4: the reflexes dodge exactly with a half-step deadband, and the learned pilot follows the drop rules.
+export const LLM_BENCHMARK = Object.freeze({ version: 4, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
 export function ollamaDecider(model, { baseURL = 'http://127.0.0.1:11434', strategy = DEFAULT_STRATEGY, timeoutMs = 60000 } = {}) {
   return async game => {
     const response = await fetch(new URL('/api/chat', baseURL), { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(timeoutMs),
@@ -48,7 +49,7 @@ export async function benchmark(name, { seeds = LLM_BENCHMARK.seeds, parallel = 
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: { games: { type: 'string', default: String(LLM_BENCHMARK.seeds.length) }, seconds: { type: 'string', default: String(LLM_BENCHMARK.seconds) }, parallel: { type: 'string', default: '4' }, 'first-seed': { type: 'string', default: '700001' } } });
-  const directory = resolve(process.env.DATA_DIR || '.data'), policy = (await readJSON(join(directory, 'policy.json'), null))?.params || DEFAULT_POLICY;
+  const directory = resolve(process.env.DATA_DIR || '.data'), policy = withRules((await readJSON(join(directory, 'policy.json'), null))?.params);
   const games = Number(values.games), options = { policy, reflex: policy, seconds: Number(values.seconds), parallel: Number(values.parallel), baseURL: process.env.OLLAMA_BASE_URL,
     seeds: Array.from({ length: games }, (_, i) => Number(values['first-seed']) + i) };
   await mkdir(join(directory, 'llm'), { recursive: true });

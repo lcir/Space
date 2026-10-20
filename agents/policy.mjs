@@ -4,6 +4,8 @@ export const DEFAULT_POLICY = Object.freeze({ lead: .25, safetyMargin: 4, dodgeH
 const SHIP_SPEED = 520;
 /** The drop rules accepted so far by `npm run sim:rules` experiments (docs/LEARNING.md). */
 export const RULES = Object.freeze({ rules: true, tripleRefresh: 5, pickupSlack: 0 });
+/** How every learned pilot flies: trained parameters plus the accepted drop rules, which are not trained. */
+export const withRules = params => ({ ...(params || DEFAULT_POLICY), ...RULES });
 const aimed = new WeakMap();
 /** Continuous level: 0 at the start, 1 when sector 1 is cleared, 6.5 halfway through sector 7. */
 export function levelProgress(game) {

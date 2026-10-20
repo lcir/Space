@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Game, clamp } from '../src/engine.js';
-import { seededRandom, policyInput, policyTarget } from './policy.mjs';
+import { seededRandom, policyInput, policyTarget, withRules } from './policy.mjs';
 import { DEFAULT_STRATEGY, chatMessages, gameObservation } from './llm.mjs';
 import { benchmark, LLM_BENCHMARK } from './llm-bench.mjs';
 import { readJSON, atomicJSON } from '../server/store.mjs';
@@ -41,8 +41,9 @@ const shuffle = (items, random) => { for (let i = items.length - 1; i > 0; i--) 
 export async function distill(directory, { samples = 6000, iters = 600, batch = 8, learningRate = 1e-4, layers = 16, games = 8, name = 'space-pilot', base = 'Qwen/Qwen2.5-0.5B-Instruct',
   reference = 'qwen2.5:0.5b', baseURL = 'http://127.0.0.1:11434', python = join(root, '.venv', 'bin', 'python'), ollamaBin = 'ollama', keep = false } = {}) {
   const folder = join(directory, 'llm'), statePath = join(folder, 'state.json'), studentStates = join(folder, 'student-states.jsonl');
-  const policy = (await readJSON(join(directory, 'policy.json'), null))?.params;
-  if (!policy) throw new Error('No learned policy to learn from; run npm run train first');
+  const params = (await readJSON(join(directory, 'policy.json'), null))?.params;
+  if (!params) throw new Error('No learned policy to learn from; run npm run train first');
+  const policy = withRules(params);
   const state = await readJSON(statePath, { runs: 0, baseline: null, champion: null }), number = state.runs + 1, runDir = join(folder, 'runs', String(number).padStart(4, '0'));
   const dataDir = join(runDir, 'data'), adapter = join(runDir, 'adapter'), fused = join(runDir, 'fused'), gguf = join(runDir, 'model.gguf'), random = seededRandom(number);
   await mkdir(dataDir, { recursive: true });

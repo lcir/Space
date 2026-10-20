@@ -2,7 +2,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import { Game } from '../src/engine.js';
 import { FixedStepLoop } from '../src/loop.js';
 import { pilotInput } from '../src/pilot.js';
-import { policyInput, DEFAULT_POLICY, seededRandom, eventReward } from '../agents/policy.mjs';
+import { policyInput, seededRandom, eventReward, withRules } from '../agents/policy.mjs';
 import { readJSON } from './store.mjs';
 import { join } from 'node:path';
 export class RequestError extends Error { constructor(message, status = 400) { super(message); this.status = status; } }
@@ -81,12 +81,12 @@ export class Room {
     if (!ship || ship.lives <= 0) return {};
     const command = this.commands.get(role);
     // Agent and model targets steer through the best known reflexes.
-    const reflex = this.trained?.params || DEFAULT_POLICY;
+    const reflex = withRules(this.trained?.params);
     if (command && command.until > this.now()) return 'targetX' in command.command ? policyInput(this.game,ship,reflex,command.command) : command.command;
     const autonomous = role === this.role() && this.mode !== 'human';
     if (!autonomous) return {};
     if (this.provider === 'none') return {};
-    if (this.provider === 'learned') return policyInput(this.game,ship,this.trained?.params || DEFAULT_POLICY);
+    if (this.provider === 'learned') return policyInput(this.game,ship,reflex);
     if (this.provider === 'ollama') {
       const builtin = this.commands.get('builtin');
       if (builtin && builtin.until > this.now()) return policyInput(this.game,ship,reflex,builtin.command);
