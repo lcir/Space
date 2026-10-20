@@ -2,6 +2,8 @@ import { clamp, invasionSpeed } from '../src/engine.js';
 // Drop values and stickiness default to 0 (ignore drops, re-choose targets freely), the behavior before they existed.
 export const DEFAULT_POLICY = Object.freeze({ lead: .25, safetyMargin: 4, dodgeHorizon: 1.2, targetBias: 0, fireMargin: 1000, rapidValue: 0, shieldValue: 0, stickiness: 0 });
 const SHIP_SPEED = 520;
+/** The drop rules accepted so far by `npm run sim:rules` experiments (docs/LEARNING.md). */
+export const RULES = Object.freeze({ rules: true, tripleRefresh: 5 });
 const aimed = new WeakMap();
 /** Continuous level: 0 at the start, 1 when sector 1 is cleared, 6.5 halfway through sector 7. */
 export function levelProgress(game) {
@@ -31,10 +33,10 @@ export function policyTarget(game, ship, params = DEFAULT_POLICY) {
   }
   return { targetX, fire: Math.abs(targetX - ship.x) < params.fireMargin };
 }
-/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life), then ϟ when none is active, then enemies.
+/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life), then ϟ when at most `tripleRefresh` seconds of it are left, then enemies.
  * A drop is safe when flying under it and waiting until it is caught is hit by no known shot; hits while invincible do not count. */
 export function ruleTarget(game, ship, params) {
-  for (const [type, wanted] of [['shield', true], ['rapid', ship.power <= 0]]) {
+  for (const [type, wanted] of [['shield', true], ['rapid', ship.power <= (params.tripleRefresh || 0)]]) {
     if (!wanted) continue;
     const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
     for (const drop of drops) {

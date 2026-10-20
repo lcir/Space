@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { performance } from 'node:perf_hooks';
 import { Game } from '../src/engine.js';
-import { seededRandom, policyInput, policyTarget, levelProgress, shotThreats, firstCollision } from './policy.mjs';
+import { RULES, seededRandom, policyInput, policyTarget, levelProgress, shotThreats, firstCollision } from './policy.mjs';
 import { readJSON } from '../server/store.mjs';
 // Hit contexts are taken at the last tick when some position was still safe: just before a hit nothing is.
 export const CONTEXTS = Object.freeze({ boss: 'boss', multi: '≥2 shots', wall: 'near a wall', pickup: '≤1 s after a pickup', drop: 'aiming at a drop', late: 'trapped <0.1 s before (no time to react)' });
@@ -31,17 +31,19 @@ export function simulate(seed, params, seconds) {
 }
 if (!isMainThread) parentPort.postMessage(workerData.seeds.map(seed => simulate(seed, workerData.params, workerData.seconds)));
 else if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { values, positionals } = parseArgs({ allowPositionals: true, options: { games: { type: 'string', default: '200' }, seconds: { type: 'string', default: '600' }, 'first-seed': { type: 'string', default: '950001' }, parallel: { type: 'string', default: '4' } } });
+  const { values, positionals } = parseArgs({ allowPositionals: true, options: { games: { type: 'string', default: '200' }, seconds: { type: 'string', default: '600' }, 'first-seed': { type: 'string', default: '950001' }, parallel: { type: 'string', default: '4' }, with: { type: 'string', multiple: true, default: [] } } });
   const champion = (await readJSON(join(resolve(process.env.DATA_DIR || '.data'), 'policy.json'), null))?.params;
   if (!champion) { console.error('No learned policy; run npm run train first'); process.exit(1); }
   const games = Number(values.games), seconds = Number(values.seconds), parallel = Number(values.parallel), seeds = Array.from({ length: games }, (_, i) => Number(values['first-seed']) + i);
-  const pilots = { values: champion, rules: { ...champion, rules: true } }, names = positionals.length ? positionals : Object.keys(pilots);
+  // --with key=value changes one rule parameter, so a variant differs from `rules` in exactly what is being tested.
+  const variant = Object.fromEntries(values.with.map(pair => pair.split('=')).map(([key, value]) => [key, Number(value)]));
+  const pilots = { values: champion, rules: { ...champion, ...RULES, ...variant } }, names = positionals.length ? positionals : Object.keys(pilots);
   if (!(parallel >= 1) || names.some(name => !pilots[name])) { console.error(`Pilots: ${Object.keys(pilots).join(', ')}; --parallel must be at least 1`); process.exit(1); }
   for (const name of names) {
     const started = performance.now(), chunks = Array.from({ length: parallel }, (_, i) => seeds.filter((_, j) => j % parallel === i)).filter(c => c.length);
     const results = (await Promise.all(chunks.map(chunk => new Promise((done, fail) => new Worker(fileURLToPath(import.meta.url), { workerData: { seeds: chunk, params: pilots[name], seconds } }).once('message', done).once('error', fail).once('exit', code => fail(new Error(`Simulation worker exited with code ${code}`))))))).flat();
     const sum = key => results.reduce((total, r) => total + r[key], 0), hits = sum('hits');
-    console.log(`${name.padEnd(7)} level ${(sum('level') / games).toFixed(2)} · ${(sum('seconds') / games).toFixed(0)} s · + ${(sum('lives') / games).toFixed(1)} · ϟ ${(sum('triples') / games).toFixed(1)} per game · ${(hits / sum('seconds') * 60).toFixed(2)} hits/min · ${(hits ? sum('chasing') / hits * 100 : 0).toFixed(0)}% of hits while chasing a drop · ${((performance.now() - started) / 1000).toFixed(0)} s`);
+    console.log(`${name === 'rules' && values.with.length ? `rules[${values.with.join(',')}]` : name.padEnd(7)} level ${(sum('level') / games).toFixed(2)} · ${(sum('seconds') / games).toFixed(0)} s · + ${(sum('lives') / games).toFixed(1)} · ϟ ${(sum('triples') / games).toFixed(1)} per game · ${(hits / sum('seconds') * 60).toFixed(2)} hits/min · ${(hits ? sum('chasing') / hits * 100 : 0).toFixed(0)}% of hits while chasing a drop · ${((performance.now() - started) / 1000).toFixed(0)} s`);
     const pct = n => `${(hits ? n / hits * 100 : 0).toFixed(0)}%`;
     console.log(`        hits: ${Object.entries(CONTEXTS).map(([key, label]) => `${label} ${pct(sum(key))}`).join(' · ')} · flying to a drop ${(sum('chaseTicks') / sum('ticks') * 100).toFixed(0)}% of the time`);
   }

@@ -52,6 +52,12 @@ Each change is measured alone against the previous accepted state, on the same 2
 
 The sample-gap explanation above turned out to be wrong (2a). Tracing individual hits showed the real cause: the nearest safe position was 6–8 px away, inside the 10 px deadband of `policyInput`, so the ship never moved there. With 2b almost every game lasts until the cap (596 s of 600, 1784 s of 1800 with the rules), so level now mostly measures how fast sectors are cleared, not survival. The rules are still the safer pilot (0.20 vs 0.35 hits per minute), but they clear sectors more slowly. They collect fewer ϟ (67 vs 112 per game), because a ϟ is only taken when none is active, and they spend detours on + drops at full lives.
 
+| # | Change (rules pilot only) | Level (600 s cap) | Hits per minute | Fresh seeds 960001+ | Decision |
+| --- | --- | --- | --- | --- | --- |
+| 3 | take ϟ when at most `tripleRefresh` seconds are left: 0 / 1 / 2 / 3 / 4 / **5** / 6 / 8 (always) | 68.73 / 69.77 / 70.54 / 71.78 / 73.08 / **73.47** / 73.23 / 69.88 | 0.20–0.25 | 0 → 68.64, 4 → 72.89, **5 → 73.95** (drop values: 75.86) | **adopted: 5 s** |
+
+Always taking a ϟ (8) collects twice as many but loses levels to the detours. The accepted rule set is `RULES` in `agents/policy.mjs`; `npm run sim:rules` plays it as `rules`.
+
 ### Running it
 
 ```sh
