@@ -13,6 +13,7 @@ export function seededRandom(seed) {
 }
 /** Where the policy aims before dodging; also the teacher's answer when distilling it into a language model. */
 export function policyTarget(game, ship, params = DEFAULT_POLICY) {
+  if (params.rules) return ruleTarget(game, ship, params);
   const cost = enemy => Math.abs(enemy.x - ship.x) - enemy.y * .2 + (enemy.x - 480) * params.targetBias / 500;
   let target = null, nearest = Infinity;
   for (const enemy of game.enemies) { const c = cost(enemy); if (c < nearest) { nearest = c; target = enemy; } }
@@ -29,6 +30,19 @@ export function policyTarget(game, ship, params = DEFAULT_POLICY) {
     if (distance - value < nearest) { nearest = distance - value; targetX = drop.x; }
   }
   return { targetX, fire: Math.abs(targetX - ship.x) < params.fireMargin };
+}
+/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life), then ϟ when none is active, then enemies.
+ * A drop is safe when flying under it and waiting until it is caught is hit by no known shot; hits while invincible do not count. */
+export function ruleTarget(game, ship, params) {
+  for (const [type, wanted] of [['shield', true], ['rapid', ship.power <= 0]]) {
+    if (!wanted) continue;
+    const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
+    for (const drop of drops) {
+      const threats = shotThreats(game, ship, Math.max(params.dodgeHorizon, (ship.y - drop.y) / 110), params.safetyMargin);
+      if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity) return { targetX: drop.x, fire: true, reason: type === 'shield' ? 'life' : 'triple' };
+    }
+  }
+  return { targetX: policyTarget(game, ship, { ...params, rules: false, rapidValue: 0, shieldValue: 0 }).targetX, fire: true, reason: 'enemy' };
 }
 /** Enemy shots that cross the ship's row within `horizon` seconds, with the times they enter, pass and leave it. */
 export function shotThreats(game, ship, horizon, margin) {
