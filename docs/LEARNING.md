@@ -27,7 +27,16 @@ Training fitness is the mean level reached on the generation's games (300 second
 | 1800 s | champion (drop values) | 97.26 | 932 s | 58.3 / 145.4 | 1.25 |
 | 1800 s | champion + rules | **136.19** | 1532 s | 118.6 / 137.8 | **0.58** |
 
-With drop values, 86% of hits happen while the pilot is flying to a drop. The script also reports 0% for the rules, but that number is partly true by construction: the rules drop a target as soon as it becomes unsafe, so on the tick before a hit they are no longer aiming at a drop. The meaningful evidence is the halved hit rate and the longer games. The rules are not yet trained or used by the arena; `sanitizePolicy` strips the flag.
+With drop values, 86% of hits happen while the pilot is flying to a drop. The script also reports 0% for the rules, but that number is partly true by construction: the rules drop a target as soon as it becomes unsafe, so on the tick before a hit they are no longer aiming at a drop. The meaningful evidence is the halved hit rate and the longer games. The rules are not yet trained or used by the arena. Training strips the flag (`sanitizePolicy`), but the arena, distillation and `bench:llm` would use a `rules` key written into `policy.json`.
+
+The simulation also records what was going on at the last tick when some position was still safe, because just before a hit none is (200 games, 600 s cap):
+
+| Pilot | Flying to a drop (share of time) | Hits while aiming at a drop | ≥2 shots | Boss | ≤1 s after a pickup | Trapped <0.1 s before the hit |
+| --- | --- | --- | --- | --- | --- | --- |
+| champion (drop values) | 52% | 86% | 81% | 5% | 12% | 100% |
+| champion + rules | 37% | 28% | 82% | 5% | 11% | 100% |
+
+With drop values, chasing drops is strongly over-represented among hits. With the rules, it is not. Every hit comes less than 0.1 s after a safe position still existed. The cause is the collision prediction: it checks a shot only when it enters, crosses the middle of and leaves the ship's row. A ship crossing a shot's column can pass between those samples, so the prediction calls a path safe that runs through the shot.
 
 ### Running it
 
