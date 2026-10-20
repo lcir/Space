@@ -39,10 +39,10 @@ export function ruleTarget(game, ship, params) {
     const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
     for (const drop of drops) {
       const threats = shotThreats(game, ship, Math.max(params.dodgeHorizon, (ship.y - drop.y) / 110), params.safetyMargin);
-      if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity) return { targetX: drop.x, fire: true, reason: type === 'shield' ? 'life' : 'triple' };
+      if (firstCollision(ship, threats, drop.x, ship.invincible) === Infinity) return { targetX: drop.x, fire: Math.abs(drop.x - ship.x) < params.fireMargin, reason: type === 'shield' ? 'life' : 'triple' };
     }
   }
-  return { targetX: policyTarget(game, ship, { ...params, rules: false, rapidValue: 0, shieldValue: 0 }).targetX, fire: true, reason: 'enemy' };
+  return { ...policyTarget(game, ship, { ...params, rules: false, rapidValue: 0, shieldValue: 0 }), reason: 'enemy' };
 }
 /** Enemy shots that cross the ship's row within `horizon` seconds, with the times they enter, pass and leave it. */
 export function shotThreats(game, ship, horizon, margin) {
