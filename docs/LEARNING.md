@@ -58,6 +58,13 @@ The sample-gap explanation above turned out to be wrong (2a). Tracing individual
 
 Always taking a ϟ (8) collects twice as many but loses levels to the detours. The accepted rule set is `RULES` in `agents/policy.mjs`; `npm run sim:rules` plays it as `rules`.
 
+| # | Change (rules pilot, with 3) | Level 600 s / fresh seeds | Hits per minute | Level 1800 s (game length) | + per game | Decision |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4 | + also at full lives (the user's rule) | 73.47 / 73.95 | 0.22 / 0.23 | 140.08 (1800 s) | 64 | current default |
+| 4 | `shieldAtFull: 0`: + only when a life is missing | **80.14 / 80.44** | 0.32 / 0.34 | **146.37** (1787 s) | 20 | open: faster, but takes more hits |
+
+Skipping + at full lives saves the detours: about 6.5 levels in 600 s. It costs about 45% more hits, and over 1800 s some games are lost. It still beats the drop-values pilot on both measures (75.86 levels, 0.34 hits per minute on the fresh seeds).
+
 ### Running it
 
 ```sh

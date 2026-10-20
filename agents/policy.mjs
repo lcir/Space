@@ -33,10 +33,10 @@ export function policyTarget(game, ship, params = DEFAULT_POLICY) {
   }
   return { targetX, fire: Math.abs(targetX - ship.x) < params.fireMargin };
 }
-/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life), then ϟ when at most `tripleRefresh` seconds of it are left, then enemies.
+/** Fixed priorities: a + whenever it is safe (it always shields, and repairs a missing life; `shieldAtFull: 0` skips it at full lives), then ϟ when at most `tripleRefresh` seconds of it are left, then enemies.
  * A drop is safe when flying under it and waiting until it is caught is hit by no known shot; hits while invincible do not count. */
 export function ruleTarget(game, ship, params) {
-  for (const [type, wanted] of [['shield', true], ['rapid', ship.power <= (params.tripleRefresh || 0)]]) {
+  for (const [type, wanted] of [['shield', ship.lives < 3 || params.shieldAtFull !== 0], ['rapid', ship.power <= (params.tripleRefresh || 0)]]) {
     if (!wanted) continue;
     const drops = (game.drops || []).filter(d => d.type === type && d.y < ship.y && Math.abs(d.x - ship.x) / SHIP_SPEED <= (ship.y - d.y) / 110).sort((a, b) => Math.abs(a.x - ship.x) - Math.abs(b.x - ship.x));
     for (const drop of drops) {
