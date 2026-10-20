@@ -5,13 +5,14 @@ import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { Game } from '../src/engine.js';
 import { pilotInput } from '../src/pilot.js';
-import { DEFAULT_POLICY, seededRandom, policyInput, policyTarget, levelProgress, withRules } from './policy.mjs';
+import { DEFAULT_POLICY, seededRandom, policyInput, commandTarget, levelProgress, withRules } from './policy.mjs';
 import { ACTION_FORMAT, DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from './llm.mjs';
 import { readJSON } from '../server/store.mjs';
 /** The game waits for every model decision, so results measure play rather than inference latency.
  * Games run until they are lost (or the time cap); the main result is the level reached. */
 // Version 4: the reflexes dodge exactly with a half-step deadband, and the learned pilot follows the drop rules.
-export const LLM_BENCHMARK = Object.freeze({ version: 4, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
+// Version 5: a command aimed at a drop is collected at the last moment by the reflexes.
+export const LLM_BENCHMARK = Object.freeze({ version: 5, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
 export function ollamaDecider(model, { baseURL = 'http://127.0.0.1:11434', strategy = DEFAULT_STRATEGY, timeoutMs = 60000 } = {}) {
   return async game => {
     const response = await fetch(new URL('/api/chat', baseURL), { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(timeoutMs),
@@ -24,7 +25,7 @@ export function ollamaDecider(model, { baseURL = 'http://127.0.0.1:11434', strat
 export function controller(name, { policy = DEFAULT_POLICY, ...options } = {}) {
   if (name === 'heuristic') return { input: game => pilotInput(game) };
   if (name === 'learned') return { input: game => policyInput(game, game.player, policy) };
-  if (name === 'oracle') return { decide: async game => ({ ...policyTarget(game, game.player, policy), dodge: true }) };
+  if (name === 'oracle') return { decide: async game => ({ ...commandTarget(game, game.player, policy), dodge: true }) };
   return { decide: ollamaDecider(name, options) };
 }
 export async function playGame(seed, control, { seconds = LLM_BENCHMARK.seconds, interval = LLM_BENCHMARK.interval, reflex = DEFAULT_POLICY, onDecision } = {}) {

@@ -90,6 +90,8 @@ With the deadband fixed and drops collected at the last moment, the exact predic
 
 The 1800 s column was measured with the champion of generation 1069 (benchmark 102.42); the final champion (generation 1215) was checked at 600 s only.
 
+**Distillation with the rules.** Run 4 learned the rules' targets directly and reached level 32.61 on `bench:llm` (version 4), below the run 3 champion (42.79), collecting only 7.9 + and 20.4 ϟ per game. Collecting at the last moment is a target that changes in a short window and must be timed to within a fraction of a second, while the model decides every 0.25 s from samples taken once per second. Through the model's command path, the rules' own targets reach 49.41. Without last-moment collection they reach 42.59, no better than the champion. The split that works: a command names a drop as soon as it is worth collecting (`commandTarget`), and `policyInput` keeps shooting until the last moment, at 120 Hz. The oracle reaches 48.86 this way while the model learns the stable target. This applies to every command aimed at a drop, from a model or an external agent.
+
 ### Running it
 
 ```sh

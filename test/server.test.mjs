@@ -192,3 +192,9 @@ test('training and benchmarks play the learned parameters with the accepted drop
   for(let tick=0;tick<60*120&&g.state==='playing';tick++){g.update(1/120,policyInput(g,g.player,{...DEFAULT_POLICY,...RULES}));g.events.length=0;}
   assert.equal(benchmarkPolicy(DEFAULT_POLICY,{seeds:[7],seconds:60}).level,levelProgress(g));
 });
+test('a command aimed at a drop is flown at the last moment by the reflexes',()=>{
+  const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[];g.drops=[{id:'d1',x:180.4,y:300,w:24,h:24,type:'rapid'}];
+  const R={...DEFAULT_POLICY,...RULES},enemy=policyTarget(g,s,R);assert.equal(enemy.reason,'enemy');assert.ok(enemy.targetX>s.x-2);
+  assert.equal(policyInput(g,s,R,{targetX:180,fire:true}).left,false);assert.equal(policyInput(g,s,{...R,pickupSlack:undefined},{targetX:180,fire:true}).left,true);
+  g.drops[0].y=594-27-60;assert.equal(policyInput(g,s,R,{targetX:180,fire:true}).left,true);
+});

@@ -4,14 +4,14 @@ import { spawn } from 'node:child_process';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Game, clamp } from '../src/engine.js';
-import { seededRandom, policyInput, policyTarget, withRules } from './policy.mjs';
+import { seededRandom, policyInput, commandTarget, withRules } from './policy.mjs';
 import { DEFAULT_STRATEGY, chatMessages, gameObservation } from './llm.mjs';
 import { benchmark, LLM_BENCHMARK } from './llm-bench.mjs';
 import { readJSON, atomicJSON } from '../server/store.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url)), STUDENT_STATES = 20000;
 /** One chat example: what the model sees in a state, and what the learned pilot would aim at there. */
 export function teacherSample(game, policy) {
-  const { targetX, fire } = policyTarget(game, game.player, policy);
+  const { targetX, fire } = commandTarget(game, game.player, policy);
   return { messages: [...chatMessages(gameObservation(game), DEFAULT_STRATEGY), { role: 'assistant', content: JSON.stringify({ targetX: Math.round(clamp(targetX, 32, 928)), fire, dodge: true }) }] };
 }
 export function teacherRollouts(policy, count, firstSeed) {

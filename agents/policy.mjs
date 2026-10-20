@@ -97,11 +97,15 @@ export function safeX(game, ship, desired, params = DEFAULT_POLICY) {
   }
   return best;
 }
+/** What a command should name: the rules' target with drops chosen as soon as they are worth it, since `policyInput` times the pickup itself. */
+export const commandTarget = (game, ship, params) => policyTarget(game, ship, { ...params, pickupSlack: undefined });
 export function policyInput(game, ship, params = DEFAULT_POLICY, command = null) {
   if (!ship || ship.lives <= 0) return { left: false, right: false, fire: false };
   const auto = Number.isFinite(command?.targetX) ? null : policyTarget(game, ship, params);
   let targetX = clamp(auto ? auto.targetX : command.targetX, 32, 928);
   const fire = command ? command.fire !== false : auto.fire;
+  // A model decides every few hundred milliseconds, too coarse to time a pickup: it names the drop, and the reflexes wait until the last moment.
+  if (!auto && params.rules && params.pickupSlack >= 0 && (game.drops || []).some(d => Math.abs(d.x - command.targetX) < 12)) { const now = policyTarget(game, ship, params); if (now.reason === 'enemy') targetX = clamp(now.targetX, 32, 928); }
   if (command?.dodge !== false) targetX = safeX(game, ship, targetX, params);
   // Half of one 120 Hz step: the tightest deadband that cannot oscillate, so a safe position a few pixels away is actually reached.
   return { left: targetX < ship.x - SHIP_SPEED / 240, right: targetX > ship.x + SHIP_SPEED / 240, fire };
