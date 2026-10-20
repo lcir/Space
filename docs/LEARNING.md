@@ -94,6 +94,8 @@ The 1800 s column was measured with the champion of generation 1069 (benchmark 1
 
 Run 5 learned that split and reached 27.61 (version 5 bar: the run 3 champion at 35.32, which itself dropped from 42.79 because it does not expect the reflexes to wait). On 400 validation examples it matched the teacher's + decisions 96% of the time, but its ϟ decisions only 44%. The rule takes a ϟ only when at most 5 s of triple laser are left, and the model does not learn that threshold on `power`; it confuses ϟ and enemy targets both ways. Since benchmark version 6 the reflexes own drops completely, as they own dodging: the model only chooses which enemy to shoot (`commandTarget`), the prompt no longer shows drops or `power`, and `policyInput` takes the drops the rules want. The oracle reaches 49.39 this way (learned pilot: 56.66, 8 games, 300 s).
 
+Re-judged on version 6, the run 3 champion, never trained for this split, reaches **51.08** (43.6 + / 69.4 ϟ per game). The base model reaches 10.45. Run 6, trained on enemy-only targets, matched the oracle at 49.28 but did not beat the champion. With a fixed `targetX` for 0.25 s, the formation drifts up to 40 px between decisions. Since version 7 the reflexes follow the enemy a command aimed at (within 40 px) until the next command, which lifts the oracle to 53.33. Recorded student states are now dropped only when the prompt or the teacher's answers change (`LABELS` in `agents/distill.mjs`), not when only the reflexes do.
+
 ### Running it
 
 ```sh

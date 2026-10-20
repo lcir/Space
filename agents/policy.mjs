@@ -6,7 +6,7 @@ const SHIP_SPEED = 520;
 export const RULES = Object.freeze({ rules: true, tripleRefresh: 5, pickupSlack: 0 });
 /** How every learned pilot flies: trained parameters plus the accepted drop rules, which are not trained. */
 export const withRules = params => ({ ...(params || DEFAULT_POLICY), ...RULES });
-const aimed = new WeakMap();
+const aimed = new WeakMap(), tracked = new WeakMap();
 /** Continuous level: 0 at the start, 1 when sector 1 is cleared, 6.5 halfway through sector 7. */
 export function levelProgress(game) {
   const boss = game.enemies.find(enemy => enemy.boss);
@@ -107,6 +107,11 @@ export function policyInput(game, ship, params = DEFAULT_POLICY, command = null)
   // Like dodging, drops belong to the reflexes: a model decides every few hundred milliseconds, too coarse to time a pickup or follow the rules' thresholds.
   // A command chooses which enemy to shoot; the rules take a drop when they want one, and a command aimed at a drop they do not want is ignored.
   if (!auto && params.rules && command.dodge !== false) {
+    // A command names an enemy where it was when the command was sent; the formation keeps moving, so the reflexes follow that enemy until the next command.
+    const lead = game.direction * invasionSpeed(game.wave) * params.lead;
+    if (!tracked.has(command)) tracked.set(command, game.enemies.reduce((best, e) => Math.abs(e.x + lead - command.targetX) < 40 && (!best || Math.abs(e.x - command.targetX) < Math.abs(best.x - command.targetX)) ? e : best, null)?.id);
+    const enemy = game.enemies.find(e => e.id === tracked.get(command));
+    if (enemy) targetX = clamp(enemy.x + lead, 32, 928);
     const now = policyTarget(game, ship, params);
     if (now.reason !== 'enemy' || (game.drops || []).some(d => Math.abs(d.x - command.targetX) < 12)) targetX = clamp(now.targetX, 32, 928);
   }

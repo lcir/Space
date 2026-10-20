@@ -199,3 +199,10 @@ test('the reflexes decide drops: a command aimed elsewhere still collects one, a
   g.drops[0].y=594-27-60;assert.equal(policyInput(g,s,R,{targetX:180,fire:true}).left,true);
   assert.equal(policyInput(g,s,R,{targetX:900,fire:true}).left,true);assert.equal(policyInput(g,s,R,{targetX:900,fire:true,dodge:false}).right,true);
 });
+test('the reflexes keep tracking the enemy a command aimed at until the next command',()=>{
+  const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[];g.drops=[];g.enemies=[{id:'e1',x:600,y:300,w:34,h:28,hp:1}];
+  const R={...DEFAULT_POLICY,...RULES},command={targetX:600,fire:true};
+  assert.equal(policyInput(g,s,R,command).right,true);g.enemies[0].x=300;
+  assert.equal(policyInput(g,s,R,command).left,true);assert.equal(policyInput(g,s,R,{targetX:600,fire:true}).right,true);
+  g.enemies[0].x=800;assert.equal(policyInput(g,s,R,{targetX:300,fire:true}).left,true);
+});

@@ -9,6 +9,8 @@ import { DEFAULT_STRATEGY, chatMessages, gameObservation } from './llm.mjs';
 import { benchmark, LLM_BENCHMARK } from './llm-bench.mjs';
 import { readJSON, atomicJSON } from '../server/store.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url)), STUDENT_STATES = 20000;
+// Bumped when the prompt or the teacher's answers change; recorded student states stay valid across benchmark versions that only change the reflexes.
+export const LABELS = 6;
 /** One chat example: what the model sees in a state, and what the learned pilot would aim at there. */
 export function teacherSample(game, policy) {
   const { targetX, fire } = commandTarget(game, game.player, policy);
@@ -49,10 +51,13 @@ export async function distill(directory, { samples = 6000, iters = 600, batch = 
   await mkdir(dataDir, { recursive: true });
   const bench = model => benchmark(model, { policy, reflex: policy, seeds: Array.from({ length: games }, (_, i) => 700001 + i), baseURL });
   if (state.baseline?.version !== LLM_BENCHMARK.version) {
-    // A new benchmark or prompt invalidates old scores, and states recorded with the old prompt no longer match what the model sees.
+    const previous = state.baseline?.version;
+    // A new benchmark invalidates old scores; recorded states are dropped only when what the model sees or should answer changed (LABELS).
     console.log(`Benchmarking ${reference}${state.champion ? ` and ${state.champion.model}` : ''} as the level to beat…`);
     state.baseline = await bench(reference); if (state.champion) state.champion.result = await bench(state.champion.model);
-    await rm(studentStates, { force: true }); await atomicJSON(statePath, state);
+    // States saved before `labels` existed were recorded under the benchmark version of their scores.
+    if ((state.labels ?? previous) !== LABELS) await rm(studentStates, { force: true });
+    state.labels = LABELS; await atomicJSON(statePath, state);
   }
   // States the previous champions actually reached, labelled by the teacher, teach recovery from the model's own mistakes.
   const reached = shuffle((await lines(studentStates)).map(line => JSON.parse(line)), random).slice(0, Math.round(samples * .3));

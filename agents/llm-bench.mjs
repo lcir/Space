@@ -13,7 +13,8 @@ import { readJSON } from '../server/store.mjs';
 // Version 4: the reflexes dodge exactly with a half-step deadband, and the learned pilot follows the drop rules.
 // Version 5: a command aimed at a drop is collected at the last moment by the reflexes.
 // Version 6: the reflexes collect drops by the rules; the model only chooses enemies, and the prompt no longer shows drops.
-export const LLM_BENCHMARK = Object.freeze({ version: 6, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
+// Version 7: the reflexes follow the enemy a command aimed at until the next command.
+export const LLM_BENCHMARK = Object.freeze({ version: 7, seeds: Object.freeze(Array.from({ length: 8 }, (_, i) => 700001 + i)), seconds: 300, interval: .25 });
 export function ollamaDecider(model, { baseURL = 'http://127.0.0.1:11434', strategy = DEFAULT_STRATEGY, timeoutMs = 60000 } = {}) {
   return async game => {
     const response = await fetch(new URL('/api/chat', baseURL), { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(timeoutMs),
