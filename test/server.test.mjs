@@ -73,6 +73,20 @@ test('real Ollama HTTP protocol produces actions and persists reflection memory'
   app.room.control('pause');const summary=await app.room.finish('test-end');await app.room.reflection;
   const memory=await app.store.memory('test-model');assert.equal(memory.matches,1);assert.equal(memory.lastMatchId,summary.id);assert.match(memory.strategy,/projected/);assert.equal(summary.model,'test-model');
 });
+test('a reflection that is not a strategy keeps the previous one, and a stored non-strategy falls back to the default',async t=>{
+  // A model distilled to answer with targets replies to reflection prompts with fragments like "2000,".
+  const fake=createServer(async(req,res)=>{
+    if(req.url==='/api/tags'){res.end(JSON.stringify({models:[{name:'test-model'}]}));return;}
+    let body='';for await(const chunk of req)body+=chunk;const value=JSON.parse(body);
+    res.setHeader('Content-Type','application/json');res.end(JSON.stringify({message:{content:JSON.stringify(value.format.properties.strategy?{strategy:'2000,'}:{targetX:800,fire:true,dodge:true})}}));
+  });await new Promise(r=>fake.listen(0,'127.0.0.1',r));t.after(()=>{fake.closeAllConnections();fake.close();});
+  const {app,client}=await fixture(t,{ollamaURL:`http://127.0.0.1:${fake.address().port}`,model:'test-model'});
+  await writeFile(app.store.memoryPath('test-model'),JSON.stringify({model:'test-model',matches:3,strategy:':196,',recent:[]}));
+  assert.equal((await app.store.memory('test-model')).strategy,DEFAULT_STRATEGY);
+  await client.request('/api/config',{provider:'ollama'});await client.start();await sleep(120);
+  app.room.control('pause');await app.room.finish('test-end');await app.room.reflection;
+  const memory=await app.store.memory('test-model');assert.equal(memory.matches,4);assert.equal(memory.strategy,DEFAULT_STRATEGY);assert.match(memory.reflectionError,/usable strategy/);
+});
 test('slow Ollama cannot block game ticks and cleanly enters fallback',async t=>{
   const fake=createServer(async(req,res)=>{for await(const chunk of req){};setTimeout(()=>res.end('{}'),500);});await new Promise(r=>fake.listen(0,'127.0.0.1',r));t.after(()=>{fake.closeAllConnections();fake.close();});
   const {app,client}=await fixture(t,{ollamaURL:`http://127.0.0.1:${fake.address().port}`,ollamaTimeout:50});

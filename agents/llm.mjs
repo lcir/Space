@@ -1,5 +1,7 @@
 /** What a language model sees and answers. The live arena, the benchmark and the distillation dataset must share it exactly. */
 export const DEFAULT_STRATEGY = 'Aim at the bottom-most invaders. Keep clear of incoming shots.';
+// A model distilled to answer with targets replies to reflection prompts with fragments like "2000,"; only real sentences become strategy memory.
+export const usableStrategy = text => typeof text === 'string' && (text.match(/[a-z]{2,}/gi) || []).length >= 4;
 export const ACTION_FORMAT = Object.freeze({ type: 'object', properties: { targetX: { type: 'number', minimum: 32, maximum: 928 }, fire: { type: 'boolean' }, dodge: { type: 'boolean' } }, required: ['targetX', 'fire'], additionalProperties: false });
 // The ship's reflexes dodge and collect drops by fixed rules, so the model only chooses which enemy to shoot.
 export const systemPrompt = strategy => 'You fly a Space Invaders ship. Enemy entries are [x,y]; incoming shots are [x,y,vx,vy]; direction is the formation movement (1 right, -1 left). The ship dodges and collects drops by itself. Choose targetX (32..928) under the enemy to shoot, usually a bottom one; fire=true, dodge=true. Reply only short JSON. Strategy memory: ' + (strategy || '');

@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks';
-import { ACTION_FORMAT, chatMessages, validCommand } from '../agents/llm.mjs';
+import { ACTION_FORMAT, chatMessages, validCommand, usableStrategy } from '../agents/llm.mjs';
 export class OllamaPilot {
   constructor({ baseURL, model, store, timeoutMs = 12000, reflectionTimeoutMs = 20000 }) {
     this.baseURL = new URL(baseURL); if (!['http:', 'https:'].includes(this.baseURL.protocol) || this.baseURL.username || this.baseURL.password) throw new Error('Invalid Ollama base URL');
@@ -37,7 +37,7 @@ export class OllamaPilot {
     try {
       const result = await this.chat([{role:'system',content:'Improve a Space Invaders strategy using the match result and previous memory. Be specific about aiming and avoiding incoming shots. Return JSON with one short strategy sentence of at most 50 words. This is strategy memory, not model weight training.'},
         {role:'user',content:JSON.stringify({previous:memory.strategy, result:summary, recent:memory.recent})}], {type:'object',properties:{strategy:{type:'string',maxLength:600}},required:['strategy'],additionalProperties:false}, this.reflectionTimeoutMs, model);
-      if (typeof result.strategy !== 'string' || !result.strategy.trim()) throw new Error('Invalid strategy reflection');
+      if (!usableStrategy(result.strategy)) throw new Error('Reflection returned no usable strategy; the previous one is kept');
       strategy = result.strategy.slice(0,1600);
     } catch (error) { reflectionError = error.name === 'TimeoutError' ? 'Reflection timed out' : error.message; }
     const updated = { model, lastMatchId:summary.id, matches:memory.matches + 1, strategy, reflectionError, recent:[...(memory.recent || []), {id:summary.id,score:summary.score,reward:summary.rewards,seconds:summary.seconds}].slice(-8), updatedAt:new Date().toISOString() };
