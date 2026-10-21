@@ -70,6 +70,8 @@ export function shotThreats(game, ship, horizon, margin) {
 }
 /** Seconds until the first hit no earlier than `after` if the ship flies to `x` at full speed and stays there; Infinity if none. */
 export function firstCollision(ship, threats, x, after = 0) {
+  // The ship moves in whole 120 Hz steps until it is within the deadband, so it stops up to half a step from `x` (or stays put).
+  const step = SHIP_SPEED / 120; x = clamp(ship.x + Math.sign(x - ship.x) * step * Math.round(Math.abs(x - ship.x) / step), 32, 928);
   const stop = Math.abs(x - ship.x) / SHIP_SPEED, v = Math.sign(x - ship.x) * SHIP_SPEED;
   let first = Infinity;
   // The horizontal gap is linear while the ship flies and again after it stops, so the exact first time it is within reach is solvable.

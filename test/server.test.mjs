@@ -155,15 +155,35 @@ test('distillation examples show the model exactly the live prompt and a valid t
   assert.equal(user.ship,'player');assert.equal(user.direction,1);assert.ok(user.enemies.length>0);assert.ok(action.targetX>=32&&action.targetX<=928);
 });
 test('LLM benchmark waits for every decision and replays the same game for the same seed',async()=>{
-  const reached=[],options={seconds:5,interval:.25,onDecision:game=>reached.push(game.time)};
-  const first=await playGame(5,controller('oracle'),options),second=await playGame(5,controller('oracle'),{seconds:5,interval:.25});
+  const reached=[],options={seconds:5,latency:0,gap:.25,onDecision:game=>reached.push(game.time)};
+  const first=await playGame(5,controller('oracle'),options),second=await playGame(5,controller('oracle'),{seconds:5,latency:0,gap:.25});
   assert.equal(first.decisions,20);assert.equal(reached.length,20);assert.deepEqual({...first,latencyMs:0},{...second,latencyMs:0});
 });
+test('LLM benchmark applies a decision after the model latency and asks again a gap later, like the arena',async()=>{
+  // Commands alternate between the edges; the one asked at 2 s only steers from 3 s, so at 4 s the ship is one second from the left edge.
+  const asked=[],control={decide:async game=>(asked.push([game.time,game.player.x]),{targetX:asked.length%2?32:928,fire:false,dodge:false})};
+  const result=await playGame(5,control,{seconds:5,latency:1,gap:1});
+  assert.equal(result.decisions,3);assert.deepEqual(asked.map(([t])=>Math.round(t*100)/100),[0,2,4]);assert.ok(Math.abs(asked[2][1]-(32+520))<6,`x ${asked[2][1]}`);
+});
 test('safe dodging plays the same games as when the collision prediction was shared',()=>{
-  // Recorded with exact dodging and the drop rules; any other change to how the pilot flies shows up here.
-  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:10.944444444444445,seconds:59.999999999997236,score:22083.333333333332});
+  // Recorded with exact dodging at the stopping point and the drop rules; any other change to how the pilot flies shows up here.
+  assert.deepEqual(benchmarkPolicy(DEFAULT_POLICY,{seeds:[1,2,3],seconds:60}),{level:10.407407407407407,seconds:59.999999999997236,score:21316.666666666668});
   const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[{x:s.x,y:s.y-200,vx:0,vy:300,w:8,h:18,friendly:false}];
   const threats=shotThreats(g,s,2,4);assert.ok(Number.isFinite(firstCollision(s,threats,s.x)));assert.equal(firstCollision(s,threats,s.x,1),Infinity);
+});
+test('dodging never picks a safe position so close that the deadband keeps the ship where it is hit',()=>{
+  // Recorded on a boss wave: 800 clears the diagonal shot by 0.3 px, the ship at 801 does not, and the deadband held it at 801.
+  const P={...DEFAULT_POLICY,safetyMargin:.13,dodgeHorizon:.35},g=new Game(()=>.5);g.reset();const s=g.player;s.x=801;s.invincible=0;
+  g.shots=[{x:804,y:520,vx:130,vy:335,w:8,h:18,friendly:false}];
+  const threats=shotThreats(g,s,P.dodgeHorizon,P.safetyMargin),x=safeX(g,s,814,P),input=policyInput(g,s,P,{targetX:814,fire:true});
+  assert.ok(Number.isFinite(firstCollision(s,threats,s.x)));assert.equal(firstCollision(s,threats,x),Infinity);assert.ok(input.left||input.right,`safe ${x}`);
+});
+test('collision prediction judges a target where the ship stops, in whole 120 Hz steps',()=>{
+  // From 640 the ship reaches 636 in one 4.33 px step and stops at 635.67, 0.33 px nearer a shot the exact target clears by 0.2 px.
+  const g=new Game(()=>.5);g.reset();const s=g.player;s.x=640;s.invincible=0;g.shots=[{x:612.8,y:560,vx:0,vy:300,w:8,h:18,friendly:false}];
+  assert.ok(Number.isFinite(firstCollision(s,shotThreats(g,s,1,0),636)));
+  for(let i=0;i<30;i++)g.update(1/120,policyInput(g,s,DEFAULT_POLICY,{targetX:636,fire:false,dodge:false}));
+  assert.equal(s.lives,2);
 });
 test('drop priority rules take a safe + first, then a missing triple laser, then enemies',()=>{
   const R={...DEFAULT_POLICY,rules:true},drop=(x,type,y=300)=>({id:'d'+x+type,x,y,w:24,h:24,type});
