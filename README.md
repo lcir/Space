@@ -27,14 +27,16 @@ Pause affects the shared mission. Leaving or unfocusing the page releases/neutra
 
 ### Fly with the trained Ollama model
 
-[**penous/space-pilot**](https://huggingface.co/penous/space-pilot) is `Qwen2.5-0.5B-Instruct` distilled from the learned pilot (Apache-2.0, 1 GB F16 GGUF). With [Ollama](https://ollama.com) installed and running:
+[**penous/space-pilot**](https://huggingface.co/penous/space-pilot) is `Qwen2.5-0.5B-Instruct` distilled from the learned pilot (Apache-2.0, GGUF in F16 and Q8_0). With [Ollama](https://ollama.com) installed and running:
 
 ```sh
 ollama pull hf.co/penous/space-pilot
 OLLAMA_MODEL=hf.co/penous/space-pilot npm start
 ```
 
-Open http://localhost:3000/arena, select **Ollama** (the model field is prefilled from `OLLAMA_MODEL`), click **Apply** and **Launch mission**. On the LLM benchmark it reaches level 54.2; the base `qwen2.5:0.5b` reaches 9.2. The model only chooses targets, so it plays well only inside this game with its reflexes.
+Without a tag Ollama pulls the F16 file (994 MB). `hf.co/penous/space-pilot:Q8_0` is the same weights in 531 MB; it answers about 20% faster and plays as well.
+
+Open http://localhost:3000/arena, select **Ollama** (the model field is prefilled from `OLLAMA_MODEL`), click **Apply** and **Launch mission**. On the LLM benchmark, played with the arena's latency, it reaches level 51.9 (Q8_0: 53.1); the base `qwen2.5:0.5b` reaches 27.0. The model only chooses targets, so it plays well only inside this game with its reflexes.
 
 - **Faster decisions:** start Ollama with `OLLAMA_NUM_PARALLEL=4`. On macOS, run `launchctl setenv OLLAMA_NUM_PARALLEL 4` and restart the Ollama app; this lasts until reboot. It halves the time per decision in the benchmark.
 - **Reflex parameters:** the reflexes and the Learned pilot use the trained parameters from `.data/policy.json`, which is not in the repository. A fresh clone uses the default parameters, which play about 10% worse in the benchmarks (oracle 49.1 instead of 53.3). `npm run train -- --minutes 60` trains them; every later run continues from the checkpoint.

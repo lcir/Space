@@ -108,7 +108,7 @@ On version 7 the run 3 champion reaches **54.16** (base model 9.15, oracle 53.33
 | before | 53.33 | 45.25 | 9.66 | 14.73 |
 | after both fixes | 54.21 | **51.48** | 48.78 | 46.12 |
 
-On version 8 the run 3 champion reaches **51.85** (base model 27.04, up from 9.15 because of the reflexes). The same weights in Q8_0 reach 53.10, answer in 104–115 ms instead of 126–135 ms and take 531 MB instead of 994 MB. At the arena's temperature 0.2 the champion reaches 52.50, within the noise of 8 games. The learned pilot's policy benchmark (version 5, same fixes) moved from 102.66 to 101.50.
+On version 8 the run 3 champion reaches **51.85** (base model 27.04, up from 9.15 because of the reflexes). The same weights in Q8_0 (`hf.co/penous/space-pilot:Q8_0`) reach 53.10, answer in 104–115 ms instead of 126–135 ms and take 531 MB instead of 994 MB. At the arena's temperature 0.2 the champion reaches 52.50, within the noise of 8 games. The learned pilot's policy benchmark (version 5, same fixes) moved from 102.66 to 101.50.
 
 What would a new model gain? Ceilings measured with the oracle: perfect anticipation of the latency (labels from the state when the command arrives) 51.94; a model twice as fast (0.07 s, e.g. a shorter reply such as `{"x":240}`; `fire` and `dodge` are false in 2 of 19,200 labels) 52.16; reflex parameters evolved for 150 generations through the command path with latency 51.91. Each is under one level, within the noise of the benchmark, so the published model is kept.
 
