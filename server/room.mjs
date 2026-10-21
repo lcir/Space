@@ -2,7 +2,7 @@ import { randomInt, randomUUID } from 'node:crypto';
 import { Game } from '../src/engine.js';
 import { FixedStepLoop } from '../src/loop.js';
 import { pilotInput } from '../src/pilot.js';
-import { policyInput, seededRandom, eventReward, withRules } from '../agents/policy.mjs';
+import { policyInput, seededRandom, eventReward, withRules, aimedEnemy } from '../agents/policy.mjs';
 import { readJSON } from './store.mjs';
 import { join } from 'node:path';
 export class RequestError extends Error { constructor(message, status = 400) { super(message); this.status = status; } }
@@ -119,7 +119,8 @@ export class Room {
   tick(timestamp = this.now()) {
     this.loop.advance(timestamp, dt => this.advanceFrame(dt), this.game.state === 'playing');
     if (this.game.state === 'playing' && this.provider === 'ollama' && this.mode !== 'human') {
-      this.ollama.maybeDecide(this.observation(), command => {
+      this.ollama.maybeDecide(this.observation(), (decided, seen) => {
+        const command = {...decided, enemy:aimedEnemy(seen, decided.targetX, withRules(this.trained?.params))};
         this.matchModels.add(this.ollama.model);
         this.commands.set('builtin',{command,until:this.now()+8000,source:'ollama'});
         this.recording?.write('action',{time:this.game.time,role:this.role(),source:'ollama',action:command,durationMs:8000});

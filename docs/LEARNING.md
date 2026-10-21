@@ -98,6 +98,20 @@ Re-judged on version 6, the run 3 champion, never trained for this split, reache
 
 On version 7 the run 3 champion reaches **54.16** (base model 9.15, oracle 53.33, learned pilot 56.66). Run 7, trained on enemy-only targets plus 1,800 states run 6 had reached, reached 52.95, close to the oracle but below the champion. The champion is published as [penous/space-pilot](https://huggingface.co/penous/space-pilot) (F16 GGUF, `ollama pull hf.co/penous/space-pilot`). A clearly better model would need a higher ceiling: a teacher that picks enemies knowing they are only re-chosen every 0.25 s, or training on game results instead of imitation.
 
+**Latency (version 8).** Earlier versions froze the game for each decision and applied it at once, every 0.25 s. In the arena the game keeps running: a reply steers only when it arrives, and the next question is asked 200 ms later. Version 8 plays each decision after a fixed latency of 0.15 s (the published model takes 126–141 ms on an M-series Mac) and asks again 0.2 s later. The fixed value keeps results independent of the machine; `--latency` and `--gap` change it. Measuring the oracle this way exposed two reflex errors:
+
+- The ship moves in whole 4.33 px steps and stops up to half a step from its target, while the collision prediction assumed it stops exactly there. With the learned safety margin of 0.13 px, safe-looking positions were hit, mostly by the boss's diagonal shots: 25 hits in 8 games at 0.3 s latency. Collisions are now predicted where the ship stops, and the oracle takes no hits at 0–0.3 s.
+- A command's `targetX` was matched to an enemy when it arrived, after the formation had moved by its speed times the latency; past 40 px no enemy was followed. The arena and the benchmark now name the enemy in the observation the decision was made from.
+
+| Oracle at latency | 0 s | 0.15 s | 0.3 s | 0.5 s |
+| --- | --- | --- | --- | --- |
+| before | 53.33 | 45.25 | 9.66 | 14.73 |
+| after both fixes | 54.21 | **51.48** | 48.78 | 46.12 |
+
+On version 8 the run 3 champion reaches **51.85** (base model 27.04, up from 9.15 because of the reflexes). The same weights in Q8_0 reach 53.10, answer in 104–115 ms instead of 126–135 ms and take 531 MB instead of 994 MB. At the arena's temperature 0.2 the champion reaches 52.50, within the noise of 8 games. The learned pilot's policy benchmark (version 5, same fixes) moved from 102.66 to 101.50.
+
+What would a new model gain? Ceilings measured with the oracle: perfect anticipation of the latency (labels from the state when the command arrives) 51.94; a model twice as fast (0.07 s, e.g. a shorter reply such as `{"x":240}`; `fire` and `dodge` are false in 2 of 19,200 labels) 52.16; reflex parameters evolved for 150 generations through the command path with latency 51.91. Each is under one level, within the noise of the benchmark, so the published model is kept.
+
 ### Running it
 
 ```sh
@@ -144,7 +158,7 @@ npm run distill -- --runs 5 --samples 8000 --iters 800 --games 8
 
 The first run downloads the base weights (~1 GB) into the Hugging Face cache. `MLX_PYTHON`, `OLLAMA_BIN` and `OLLAMA_BASE_URL` override the tool locations. Ollama must run on the same machine, because the exporter reads its local GGUF file.
 
-`npm run bench:llm -- heuristic learned oracle qwen2.5:0.5b space-pilot` compares controllers on the same 8 seeded games, played until they are lost (at most 300 seconds). It reports level, game length, score and drops collected. The game waits for each model decision (every 0.25 game seconds), so the score measures play, not inference speed. In the live arena the model also has to be fast enough. `oracle` sends the learned pilot's own targets through the model's command path: it is the ceiling a perfect student could reach. Results are appended to `.data/llm/benchmarks.jsonl`.
+`npm run bench:llm -- heuristic learned oracle qwen2.5:0.5b space-pilot` compares controllers on the same 8 seeded games, played until they are lost (at most 300 seconds). It reports level, game length, score and drops collected. The game waits for each model decision and plays it after a fixed latency (0.15 s, then the next question 0.2 s later, like the arena), so the score does not depend on the machine's speed; `--latency`, `--gap` and `--temperature` change these. In the live arena the real latency applies. `oracle` sends the learned pilot's own targets through the model's command path: it is the ceiling a perfect student could reach. Results are appended to `.data/llm/benchmarks.jsonl`.
 
 Stored under `.data/llm/`: `state.json` (run counter, base-model score, champion and its adapter), `history.jsonl` (one line per run), `student-states.jsonl` (the last 20,000 labelled states champions reached) and `runs/NNNN/` (training data, adapter and Modelfile). The fused model and GGUF are deleted after import unless `--keep` is given, because Ollama keeps its own copy.
 

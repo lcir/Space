@@ -22,7 +22,7 @@ In the **wingman panel**, pick a provider, click **Apply**, then **Launch missio
 | Provider | Behavior |
 | --- | --- |
 | Local pilot | Built-in reactive rules; no model |
-| Ollama | A local language model chooses which enemy to shoot every 0.25 s; the reflexes dodge, follow that enemy and collect drops |
+| Ollama | A local language model chooses which enemy to shoot a few times a second; the reflexes dodge, follow that enemy and collect drops |
 | Learned pilot | The trained controller with the drop rules (see *Learning*); no model, the strongest pilot |
 | External Codex / agent | An agent connects through the local HTTP protocol |
 | No autopilot | Wingman stays idle |

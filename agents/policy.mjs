@@ -70,6 +70,8 @@ export function shotThreats(game, ship, horizon, margin) {
 }
 /** Seconds until the first hit no earlier than `after` if the ship flies to `x` at full speed and stays there; Infinity if none. */
 export function firstCollision(ship, threats, x, after = 0) {
+  // The ship moves in whole 120 Hz steps until it is within the deadband, so it stops up to half a step from `x` (or stays put).
+  const step = SHIP_SPEED / 120; x = clamp(ship.x + Math.sign(x - ship.x) * step * Math.round(Math.abs(x - ship.x) / step), 32, 928);
   const stop = Math.abs(x - ship.x) / SHIP_SPEED, v = Math.sign(x - ship.x) * SHIP_SPEED;
   let first = Infinity;
   // The horizontal gap is linear while the ship flies and again after it stops, so the exact first time it is within reach is solvable.
@@ -99,6 +101,11 @@ export function safeX(game, ship, desired, params = DEFAULT_POLICY) {
 }
 /** What a command should name: the enemy to shoot, since `policyInput` collects drops by the rules itself. */
 export const commandTarget = (game, ship, params) => policyTarget(game, ship, { ...params, rules: false, rapidValue: 0, shieldValue: 0 });
+/** The id of the enemy a `targetX` aims at in `game` (one with enemies, direction and wave), allowing for the aiming lead; undefined if none is within 40 px. */
+export function aimedEnemy(game, targetX, params) {
+  const lead = game.direction * invasionSpeed(game.wave) * params.lead;
+  return game.enemies.reduce((best, e) => Math.abs(e.x + lead - targetX) < 40 && (!best || Math.abs(e.x - targetX) < Math.abs(best.x - targetX)) ? e : best, null)?.id;
+}
 export function policyInput(game, ship, params = DEFAULT_POLICY, command = null) {
   if (!ship || ship.lives <= 0) return { left: false, right: false, fire: false };
   const auto = Number.isFinite(command?.targetX) ? null : policyTarget(game, ship, params);
@@ -108,8 +115,9 @@ export function policyInput(game, ship, params = DEFAULT_POLICY, command = null)
   // A command chooses which enemy to shoot; the rules take a drop when they want one, and a command aimed at a drop they do not want is ignored.
   if (!auto && params.rules && command.dodge !== false) {
     // A command names an enemy where it was when the command was sent; the formation keeps moving, so the reflexes follow that enemy until the next command.
+    // A sender that knows the state the command was chosen in names the enemy itself (`enemy`); otherwise it is matched on arrival.
     const lead = game.direction * invasionSpeed(game.wave) * params.lead;
-    if (!tracked.has(command)) tracked.set(command, game.enemies.reduce((best, e) => Math.abs(e.x + lead - command.targetX) < 40 && (!best || Math.abs(e.x - command.targetX) < Math.abs(best.x - command.targetX)) ? e : best, null)?.id);
+    if (!tracked.has(command)) tracked.set(command, 'enemy' in command ? command.enemy : aimedEnemy(game, command.targetX, params));
     const enemy = game.enemies.find(e => e.id === tracked.get(command));
     if (enemy) targetX = clamp(enemy.x + lead, 32, 928);
     const now = policyTarget(game, ship, params);

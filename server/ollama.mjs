@@ -26,7 +26,7 @@ export class OllamaPilot {
     this.chat(chatMessages(observation, this.memory?.strategy), ACTION_FORMAT, this.timeoutMs)
       .then(command => {
         if (generation !== this.generation) return;
-        apply(validCommand(command)); this.status = 'active'; this.lastError = null;
+        apply(validCommand(command), observation); this.status = 'active'; this.lastError = null;
       }).catch(error => { if (generation === this.generation) { this.status = 'fallback'; this.lastError = error.name === 'TimeoutError' ? 'Ollama timed out; local reflex pilot is active' : error.message; } })
       .finally(() => { this.busy = false; this.latencyMs = Math.round(performance.now() - now); this.nextAt = performance.now() + (this.lastError ? 1500 : 200); });
   }

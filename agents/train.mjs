@@ -6,7 +6,8 @@ export const BOUNDS = Object.freeze({ lead: [0, 1, .25], safetyMargin: [0, 20, 4
 // Games run until they are lost or the time cap; the champion is the policy that reaches the highest level.
 // Difficulty stops rising after sector 15, so a strong policy can survive indefinitely and the cap bounds the cost.
 // Version 4: exact dodging with a half-step deadband, and the drop rules.
-export const BENCHMARK = Object.freeze({ version: 4, seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 600 });
+// Version 5: collisions are predicted where the ship stops, in whole 120 Hz steps.
+export const BENCHMARK = Object.freeze({ version: 5, seeds: Object.freeze(Array.from({ length: 48 }, (_, i) => 900001 + i)), seconds: 600 });
 export const sanitizePolicy = params => Object.fromEntries(Object.entries(BOUNDS).map(([key, [lo, hi]]) => [key, Number.isFinite(params?.[key]) ? clamp(params[key], lo, hi) : DEFAULT_POLICY[key]]));
 /** Mean level reached and game length over the benchmark games, flown with the accepted drop rules. */
 export function benchmarkPolicy(params, { seeds, seconds }) {
