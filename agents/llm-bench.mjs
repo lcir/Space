@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { Game } from '../src/engine.js';
 import { pilotInput } from '../src/pilot.js';
-import { DEFAULT_POLICY, seededRandom, policyInput, commandTarget, levelProgress, withRules } from './policy.mjs';
+import { DEFAULT_POLICY, seededRandom, policyInput, commandTarget, levelProgress, withRules, aimedEnemy } from './policy.mjs';
 import { ACTION_FORMAT, DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from './llm.mjs';
 import { readJSON } from '../server/store.mjs';
 /** The game waits for every model decision and plays it after a fixed latency, so results do not depend on the machine's speed.
@@ -38,6 +38,8 @@ export async function playGame(seed, control, { seconds = LLM_BENCHMARK.seconds,
   for (let tick = 0; tick < seconds * 120 && game.state === 'playing'; tick++) {
     if (control.decide && tick === ask) {
       onDecision?.(game); const started = performance.now(); reply = null; try { reply = await control.decide(game); } catch { errors++; } waiting += performance.now() - started; decisions++;
+      // The enemy is named in the state the model saw, as the arena does; the formation moves on while the reply is on its way.
+      if (reply) reply = { ...reply, enemy: aimedEnemy(game, reply.targetX, reflex) };
       arrives = tick + ticks(latency); ask = tick + Math.max(1, ticks(latency) + ticks(reply ? gap : 1.5));
     }
     // Like the arena, a failed decision keeps the previous command and the local pilot covers a missing one.

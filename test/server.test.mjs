@@ -11,7 +11,7 @@ import { ArenaClient } from '../agents/control.mjs';
 import { createTraining, trainGeneration, benchmarkPolicy } from '../agents/train.mjs';
 import { runTraining, loadTraining } from '../agents/training-store.mjs';
 import { Game } from '../src/engine.js';
-import { DEFAULT_POLICY, RULES, seededRandom, shotThreats, firstCollision, ruleTarget, policyTarget, policyInput, safeX, levelProgress } from '../agents/policy.mjs';
+import { DEFAULT_POLICY, RULES, aimedEnemy, seededRandom, shotThreats, firstCollision, ruleTarget, policyTarget, policyInput, safeX, levelProgress } from '../agents/policy.mjs';
 import { DEFAULT_STRATEGY, chatMessages, gameObservation, validCommand } from '../agents/llm.mjs';
 import { teacherRollouts } from '../agents/distill.mjs';
 import { playGame, controller } from '../agents/llm-bench.mjs';
@@ -232,6 +232,14 @@ test('the reflexes decide drops: a command aimed elsewhere still collects one, a
   assert.equal(policyInput(g,s,R,{targetX:180,fire:true}).left,false);assert.equal(policyInput(g,s,{...R,pickupSlack:undefined},{targetX:180,fire:true}).left,true);
   g.drops[0].y=594-27-60;assert.equal(policyInput(g,s,R,{targetX:180,fire:true}).left,true);
   assert.equal(policyInput(g,s,R,{targetX:900,fire:true}).left,true);assert.equal(policyInput(g,s,R,{targetX:900,fire:true,dodge:false}).right,true);
+});
+test('a delayed command keeps the enemy it named in the state it was chosen in',()=>{
+  // The formation moves 60 px while the command is on its way; matched on arrival, it would name the neighbour 64 px away.
+  const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;s.x=500;g.shots=[];g.drops=[];g.direction=1;
+  g.enemies=[{id:'a',x:400,y:300,w:34,h:28,hp:1},{id:'b',x:464,y:300,w:34,h:28,hp:1}];
+  const R={...DEFAULT_POLICY,...RULES,lead:0},command={targetX:464,fire:true,enemy:aimedEnemy(g,464,R)};
+  for(const e of g.enemies)e.x+=60;
+  assert.equal(command.enemy,'b');assert.equal(policyInput(g,s,R,command).right,true);assert.equal(policyInput(g,s,R,{targetX:464,fire:true}).left,true);
 });
 test('the reflexes keep tracking the enemy a command aimed at until the next command',()=>{
   const g=new Game(()=>.5);g.reset();const s=g.player;s.invincible=0;g.shots=[];g.drops=[];g.enemies=[{id:'e1',x:600,y:300,w:34,h:28,hp:1}];
