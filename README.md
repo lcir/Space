@@ -2,46 +2,45 @@
 
 Play alone, fly alongside an AI wingman, connect Codex, or let a local Ollama model choose your ship's targets. The fast 2.1 gameplay is retained; this iteration adds a server-authoritative arena, recordings and learning.
 
-## Play with agents
+## Quick start
+
+You need **Node 20+**. Ollama is optional.
 
 ```sh
-npm ci
-npm start
+npm ci          # installs the only dependency, ws
+npm start       # serves http://localhost:3000
 ```
 
-Open **http://localhost:3000/arena**. You fly the green ship with **A/D or arrows** and hold **Space** to fire. The selected agent flies the violet ship, with its own lives, weapons and shields. Both share the score. Touch controls are available on phones.
+Open **http://localhost:3000/arena**. You fly the green ship with **A/D or arrows** and hold **Space** to fire. The wingman, flown by the provider you choose, is the violet ship, with its own lives, weapons and shields. Both share the score. Touch controls are available on phones.
 
-Choose a wingman provider and Apply:
+In the **wingman panel**, pick a provider, click **Apply**, then **Launch mission**:
 
 | Provider | Behavior |
 | --- | --- |
 | Local pilot | Built-in reactive rules; no model |
-| Ollama | Local model chooses targets/fire; a fast reflex layer handles steering/dodging between decisions |
-| Learned pilot | Reward-optimized controller from training |
+| Ollama | A local language model chooses which enemy to shoot every 0.25 s; the reflexes dodge, follow that enemy and collect drops |
+| Learned pilot | The trained controller with the drop rules (see *Learning*); no model, the strongest pilot |
 | External Codex / agent | An agent connects through the local HTTP protocol |
 | No autopilot | Wingman stays idle |
 
-Pause affects the shared mission. Leaving or unfocusing the page releases/neutralizes human input; agents can continue playing without an open browser. There is one shared arena per server instance. A second browser can watch but cannot steal an occupied human ship. Node 20+ is required for the server.
+Pause affects the shared mission. Leaving or unfocusing the page releases/neutralizes human input; agents can continue playing without an open browser. There is one shared arena per server instance. A second browser can watch but cannot steal an occupied human ship.
 
-### Ollama on your computer
+### Fly with the trained Ollama model
 
-With Ollama installed and running:
-
-```sh
-ollama pull qwen2.5:0.5b
-npm start
-```
-
-Select **Ollama**, choose the installed model name and Apply. `qwen2.5:0.5b` is a small CPU-friendly starting model, not a strong game-playing model; larger installed models can be selected in the same field.
-
-For a model trained for this game, use the published distilled pilot [**penous/space-pilot**](https://huggingface.co/penous/space-pilot) (Apache-2.0, a 1 GB F16 GGUF fine-tuned from `Qwen2.5-0.5B-Instruct`):
+[**penous/space-pilot**](https://huggingface.co/penous/space-pilot) is `Qwen2.5-0.5B-Instruct` distilled from the learned pilot (Apache-2.0, 1 GB F16 GGUF). With [Ollama](https://ollama.com) installed and running:
 
 ```sh
 ollama pull hf.co/penous/space-pilot
 OLLAMA_MODEL=hf.co/penous/space-pilot npm start
 ```
 
-On the LLM benchmark it reaches level 54.2, while the base `qwen2.5:0.5b` reaches 9.2. The model only chooses which enemy to shoot. The arena's reflexes dodge, follow that enemy and collect drops, so it plays well only inside this game. The server uses `http://127.0.0.1:11434` by default. Override `OLLAMA_BASE_URL` and `OLLAMA_MODEL` through process environment if needed. First model load can be slower than later decisions. `OLLAMA_TIMEOUT_MS` sets the decision timeout (default 12000 ms). Errors/timeouts and local fallback are shown explicitly; inference never blocks game ticks.
+Open http://localhost:3000/arena, select **Ollama** (the model field is prefilled from `OLLAMA_MODEL`), click **Apply** and **Launch mission**. On the LLM benchmark it reaches level 54.2; the base `qwen2.5:0.5b` reaches 9.2. The model only chooses targets, so it plays well only inside this game with its reflexes.
+
+- **Faster decisions:** start Ollama with `OLLAMA_NUM_PARALLEL=4`. On macOS, run `launchctl setenv OLLAMA_NUM_PARALLEL 4` and restart the Ollama app; this lasts until reboot. It halves the time per decision in the benchmark.
+- **Reflex parameters:** the reflexes and the Learned pilot use the trained parameters from `.data/policy.json`, which is not in the repository. A fresh clone uses the default parameters, which play about 10% worse in the benchmarks (oracle 49.1 instead of 53.3). `npm run train -- --minutes 60` trains them; every later run continues from the checkpoint.
+- **Other models:** `ollama pull qwen2.5:0.5b` (or any installed model), then type its name in the model field and Apply. General models are not trained for this game and play much worse.
+
+The server uses `http://127.0.0.1:11434` by default. Override `OLLAMA_BASE_URL` and `OLLAMA_MODEL` through the environment if needed. First model load can be slower than later decisions. `OLLAMA_TIMEOUT_MS` sets the decision timeout (default 12000 ms). Errors, timeouts and the local fallback are shown explicitly; inference never blocks game ticks.
 
 ### Docker: game + Ollama
 
@@ -67,13 +66,13 @@ For slower, thoughtful Codex decisions, there is **paused solo stepping**: obser
 
 ## Learning and recordings
 
-Open **Learning and recordings → Train local pilot**, wait for the reported champion reward, then select **Learned pilot** and Apply. For long-term training, run `npm run train -- --minutes 60` (or `--forever`) from a terminal. Every run continues from the saved checkpoint.
+Open **Learning and recordings → Train local pilot**, wait for the reported champion level, then select **Learned pilot** and Apply. For long-term training, run `npm run train -- --minutes 60` (or `--forever`) from a terminal. Every run continues from the saved checkpoint.
 
-There are two separate learning mechanisms:
+There are three separate learning mechanisms:
 
 - **Ollama strategy memory:** after a match, reflection updates a short persisted strategy used in future prompts. This does not change the language model's weights.
 - **Ollama distillation:** `npm run distill` fine-tunes `qwen2.5:0.5b` (MLX, Apple Silicon) to choose enemies like the learned pilot; the current champion is published as [penous/space-pilot](https://huggingface.co/penous/space-pilot). It imports the result as `space-pilot` only if it reaches a higher level than the previous champion on a seeded LLM benchmark (`npm run bench:llm`).
-- **Local policy optimization:** accelerated game episodes on fresh seeds optimize actual controller parameters against rewards. A new policy replaces the saved champion only by beating it on a fixed benchmark of unseen games. Training is checkpointed in `.data/training/` and runs in a worker while the live arena continues.
+- **Local policy optimization:** accelerated game episodes on fresh seeds optimize the controller's parameters (aim lead, dodge margin and look-ahead, target bias, firing) for the level reached. Drops follow fixed rules: a + whenever it is safe, a ϟ when at most 5 s of triple laser are left, each collected at the last moment. A new policy replaces the saved champion only by beating it on a fixed benchmark of unseen games. Training is checkpointed in `.data/training/` and runs in a worker while the live arena continues.
 
 Completed/restarted matches produce per-ship rewards, a summary and a downloadable JSONL trace of actions, game events and observations. Data is in ignored `.data/` (or the Docker volume). The last 100 completed matches are retained; large recordings mark omitted trace lines. Read [learning details and reward definitions](docs/LEARNING.md).
 
