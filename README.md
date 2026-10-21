@@ -2,6 +2,10 @@
 
 Play alone, fly alongside an AI wingman, connect Codex, or let a local Ollama model choose your ship's targets. The fast 2.1 gameplay is retained; this iteration adds a server-authoritative arena, recordings and learning.
 
+[![The trained Ollama model flying the green ship in the arena](docs/media/space-pilot-ollama.jpg)](docs/media/space-pilot-ollama.mp4)
+
+20 s of the [trained Ollama model](#fly-with-the-trained-ollama-model) playing (with sound). Click the image to open the video.
+
 ## Quick start
 
 You need **Node 20+**. Ollama is optional.
