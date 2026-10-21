@@ -164,6 +164,9 @@ test('LLM benchmark applies a decision after the model latency and asks again a 
   const asked=[],control={decide:async game=>(asked.push([game.time,game.player.x]),{targetX:asked.length%2?32:928,fire:false,dodge:false})};
   const result=await playGame(5,control,{seconds:5,latency:1,gap:1});
   assert.equal(result.decisions,3);assert.deepEqual(asked.map(([t])=>Math.round(t*100)/100),[0,2,4]);assert.ok(Math.abs(asked[2][1]-(32+520))<6,`x ${asked[2][1]}`);
+  // Without a gap the next question is asked the moment a reply arrives, and that reply still steers.
+  const left=[];await playGame(5,{decide:async game=>(left.push(game.player.x),{targetX:32,fire:false,dodge:false})},{seconds:5,latency:1,gap:0});
+  assert.equal(left.length,5);assert.ok(left.at(-1)<32+520/240,`x ${left.at(-1)}`);
 });
 test('safe dodging plays the same games as when the collision prediction was shared',()=>{
   // Recorded with exact dodging at the stopping point and the drop rules; any other change to how the pilot flies shows up here.

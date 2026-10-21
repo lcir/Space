@@ -36,14 +36,15 @@ export async function playGame(seed, control, { seconds = LLM_BENCHMARK.seconds,
   const game = new Game(seededRandom(seed)), ticks = s => Math.round(s * 120); game.reset();
   let command = null, reply = null, arrives = -1, ask = 0, decisions = 0, errors = 0, waiting = 0, lives = 0, triples = 0;
   for (let tick = 0; tick < seconds * 120 && game.state === 'playing'; tick++) {
+    // Like the arena, a failed decision keeps the previous command and the local pilot covers a missing one.
+    if (tick === arrives && reply) command = reply;
     if (control.decide && tick === ask) {
       onDecision?.(game); const started = performance.now(); reply = null; try { reply = await control.decide(game); } catch { errors++; } waiting += performance.now() - started; decisions++;
       // The enemy is named in the state the model saw, as the arena does; the formation moves on while the reply is on its way.
       if (reply) reply = { ...reply, enemy: aimedEnemy(game, reply.targetX, reflex) };
       arrives = tick + ticks(latency); ask = tick + Math.max(1, ticks(latency) + ticks(reply ? gap : 1.5));
+      if (tick === arrives && reply) command = reply;
     }
-    // Like the arena, a failed decision keeps the previous command and the local pilot covers a missing one.
-    if (tick === arrives && reply) command = reply;
     game.update(1 / 120, control.decide ? command ? policyInput(game, game.player, reflex, command) : pilotInput(game) : control.input(game));
     for (const event of game.events.splice(0)) if (event.type === 'power') event.power === 'shield' ? lives++ : triples++;
   }
