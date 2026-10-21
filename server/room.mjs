@@ -19,8 +19,9 @@ export function validateAction(value) {
   return result;
 }
 export class Room {
-  constructor({ store, ollama, now = () => performance.now() }) {
-    this.store = store; this.ollama = ollama; this.now = now; this.game = new Game(); this.game.events = [];
+  // timeLimit is in game seconds; tests and benchmarks bound matches, a real arena plays until the game is lost.
+  constructor({ store, ollama, now = () => performance.now(), timeLimit = Infinity }) {
+    this.store = store; this.ollama = ollama; this.now = now; this.timeLimit = timeLimit; this.game = new Game(); this.game.events = [];
     this.mode = 'coop'; this.provider = 'heuristic'; this.leases = new Map(); this.commands = new Map();
     this.loop = new FixedStepLoop(); this.rewards = {player:0,wingman:0}; this.events = []; this.pendingEvents = [];
     this.lastRecordAt = 0; this.learning = { status:'idle' }; this.lastSummary = null; this.reflection = Promise.resolve();
@@ -128,7 +129,7 @@ export class Room {
     }
     if (this.game.time - this.lastRecordAt >= .2) { this.lastRecordAt = this.game.time; this.recording?.write('state',{observation:this.observation()}); }
     if (this.game.state === 'over') this.finish('game-over').catch(error => { this.storageError = error.message; });
-    if (this.game.time >= 300 && this.game.state === 'playing') { this.game.state = 'over'; this.finish('time-limit').catch(error => {this.storageError = error.message;}); }
+    if (this.game.time >= this.timeLimit && this.game.state === 'playing') { this.game.state = 'over'; this.finish('time-limit').catch(error => {this.storageError = error.message;}); }
     if (this.pendingEvents.length > 100) this.pendingEvents.splice(0,this.pendingEvents.length-100);
   }
   observation() {

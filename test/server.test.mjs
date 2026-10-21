@@ -23,6 +23,12 @@ async function fixture(t,options={}) {
   t.after(async()=>{await app.close();await rm(directory,{recursive:true,force:true});});
   return {app,base,client,directory};
 }
+test('the arena has no time limit unless one is configured, as the tests do',async t=>{
+  const {app}=await fixture(t);await app.room.start({mode:'ai'});app.room.game.time=1e4;app.room.tick();
+  assert.equal(app.room.game.state,'playing');
+  const limited=(await fixture(t,{timeLimit:300})).app;await limited.room.start({mode:'ai'});limited.room.game.time=300;limited.room.tick();
+  assert.equal(limited.room.game.state,'over');await sleep(50);assert.equal(limited.room.lastSummary?.reason,'time-limit');
+});
 test('external agent moves only its leased wingman, with bounded expiry and real recording',async t=>{
   const {app,client}=await fixture(t);await client.start();await client.claim('wingman','Integration agent');
   const before=await client.observe();await client.act({right:true,fire:true},100);await sleep(180);const after=await client.observe();

@@ -27,7 +27,7 @@ function sameOrigin(request) {
 export async function createArena(options = {}) {
   const store = options.store || new Store(resolve(options.dataDir || process.env.DATA_DIR || join(root,'.data'))); await store.init();
   const ollama = new OllamaPilot({baseURL:options.ollamaURL || process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434', model:options.model || process.env.OLLAMA_MODEL || 'qwen2.5:0.5b',store,timeoutMs:options.ollamaTimeout ?? Number(process.env.OLLAMA_TIMEOUT_MS || 12000)}); await ollama.init();
-  const room = new Room({store,ollama}); let trainWorker = null;
+  const room = new Room({store,ollama,timeLimit:options.timeLimit}); let trainWorker = null;
   const server = createServer(async (request,response) => {
     try {
       if (!sameOrigin(request)) throw new RequestError('Origin/host is not allowed',403);
