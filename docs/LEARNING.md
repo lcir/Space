@@ -96,6 +96,8 @@ Run 5 learned that split and reached 27.61 (version 5 bar: the run 3 champion at
 
 Re-judged on version 6, the run 3 champion, never trained for this split, reaches **51.08** (43.6 + / 69.4 ϟ per game). The base model reaches 10.45. Run 6, trained on enemy-only targets, matched the oracle at 49.28 but did not beat the champion. With a fixed `targetX` for 0.25 s, the formation drifts up to 40 px between decisions. Since version 7 the reflexes follow the enemy a command aimed at (within 40 px) until the next command, which lifts the oracle to 53.33. Recorded student states are now dropped only when the prompt or the teacher's answers change (`LABELS` in `agents/distill.mjs`), not when only the reflexes do.
 
+On version 7 the run 3 champion reaches **54.16** (base model 9.15, oracle 53.33, learned pilot 56.66). Run 7, trained on enemy-only targets plus 1,800 states run 6 had reached, reached 52.95, close to the oracle but below the champion. The champion is published as [penous/space-pilot](https://huggingface.co/penous/space-pilot) (F16 GGUF, `ollama pull hf.co/penous/space-pilot`). A clearly better model would need a higher ceiling: a teacher that picks enemies knowing they are only re-chosen every 0.25 s, or training on game results instead of imitation.
+
 ### Running it
 
 ```sh

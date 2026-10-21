@@ -32,7 +32,16 @@ ollama pull qwen2.5:0.5b
 npm start
 ```
 
-Select **Ollama**, choose the installed model name and Apply. `qwen2.5:0.5b` is a small CPU-friendly starting model, not a strong game-playing model; larger installed models can be selected in the same field. The server uses `http://127.0.0.1:11434` by default. Override `OLLAMA_BASE_URL` and `OLLAMA_MODEL` through process environment if needed. First model load can be slower than later decisions. `OLLAMA_TIMEOUT_MS` sets the decision timeout (default 12000 ms). Errors/timeouts and local fallback are shown explicitly; inference never blocks game ticks.
+Select **Ollama**, choose the installed model name and Apply. `qwen2.5:0.5b` is a small CPU-friendly starting model, not a strong game-playing model; larger installed models can be selected in the same field.
+
+For a model trained for this game, use the published distilled pilot [**penous/space-pilot**](https://huggingface.co/penous/space-pilot) (Apache-2.0, a 1 GB F16 GGUF fine-tuned from `Qwen2.5-0.5B-Instruct`):
+
+```sh
+ollama pull hf.co/penous/space-pilot
+OLLAMA_MODEL=hf.co/penous/space-pilot npm start
+```
+
+On the LLM benchmark it reaches level 54.2, while the base `qwen2.5:0.5b` reaches 9.2. The model only chooses which enemy to shoot. The arena's reflexes dodge, follow that enemy and collect drops, so it plays well only inside this game. The server uses `http://127.0.0.1:11434` by default. Override `OLLAMA_BASE_URL` and `OLLAMA_MODEL` through process environment if needed. First model load can be slower than later decisions. `OLLAMA_TIMEOUT_MS` sets the decision timeout (default 12000 ms). Errors/timeouts and local fallback are shown explicitly; inference never blocks game ticks.
 
 ### Docker: game + Ollama
 
@@ -63,7 +72,7 @@ Open **Learning and recordings → Train local pilot**, wait for the reported ch
 There are two separate learning mechanisms:
 
 - **Ollama strategy memory:** after a match, reflection updates a short persisted strategy used in future prompts. This does not change the language model's weights.
-- **Ollama distillation:** `npm run distill` fine-tunes `qwen2.5:0.5b` (MLX, Apple Silicon) to aim and collect drops like the learned pilot. It imports the result as `space-pilot` only if it reaches a higher level than the previous champion on a seeded LLM benchmark (`npm run bench:llm`).
+- **Ollama distillation:** `npm run distill` fine-tunes `qwen2.5:0.5b` (MLX, Apple Silicon) to choose enemies like the learned pilot; the current champion is published as [penous/space-pilot](https://huggingface.co/penous/space-pilot). It imports the result as `space-pilot` only if it reaches a higher level than the previous champion on a seeded LLM benchmark (`npm run bench:llm`).
 - **Local policy optimization:** accelerated game episodes on fresh seeds optimize actual controller parameters against rewards. A new policy replaces the saved champion only by beating it on a fixed benchmark of unseen games. Training is checkpointed in `.data/training/` and runs in a worker while the live arena continues.
 
 Completed/restarted matches produce per-ship rewards, a summary and a downloadable JSONL trace of actions, game events and observations. Data is in ignored `.data/` (or the Docker volume). The last 100 completed matches are retained; large recordings mark omitted trace lines. Read [learning details and reward definitions](docs/LEARNING.md).
