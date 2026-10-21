@@ -1,14 +1,25 @@
 {
   "name": "space-invaders-reborn",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node scripts/serve.mjs",
+    "start": "node server/app.mjs",
     "test": "node test/run.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "static": "node scripts/serve.mjs --dist",
+    "train": "node agents/train-cli.mjs",
+    "bench:llm": "node agents/llm-bench.mjs",
+    "distill": "node agents/distill.mjs",
+    "sim:rules": "node agents/rules-sim.mjs",
+    "test:server": "node --test --test-concurrency=1 test/server.test.mjs",
+    "agent": "node agents/cli.mjs",
+    "check": "npm test && npm run test:server && npm run build"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "8.22.0"
   }
 }
